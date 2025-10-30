@@ -1,0 +1,224 @@
+/* creacion_hilo_style.css */
+
+:root {
+    --yellow: #FED90B;
+    --yellow-dark: #E6C00A;
+    --text-color-light: #000;
+    --text-color-dark: #fff;
+    --bg-light: #fff;
+    --bg-dark: #212121;
+    --bg-light-secondary: #f5f5f5;
+    --bg-dark-secondary: #2a2a2a;
+    --border-light: #e0e0e0;
+    --border-dark: #424242;
+}
+
+body {
+    background-color: var(--bg-light-secondary);
+    color: var(--text-color-light);
+    font-family: 'Akatab-Regular', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body.dark {
+    background-color: var(--bg-dark);
+    color: var(--text-color-dark);
+}
+
+.main_container {
+    display: flex;
+    flex-grow: 1;
+}
+
+.creacion_hilo_content {
+    flex-grow: 1;
+    padding: 2rem;
+}
+
+.page_title {
+    font-family: 'Akatab-Bold';
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--yellow);
+    padding-bottom: .5rem;
+}
+
+.hilo_form {
+    background: var(--bg-light);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+}
+
+body.dark .hilo_form {
+    background: var(--bg-dark-secondary);
+    border-color: var(--border-dark);
+}
+
+.form_group {
+    margin-bottom: 1.5rem;
+}
+
+.form_group label {
+    display: block;
+    font-family: 'Akatab-Bold';
+    font-size: 1.1rem;
+    margin-bottom: .5rem;
+}
+
+#titulo_hilo {
+    width: 100%;
+    padding: .75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    font-size: 1rem;
+    font-family: 'Akatab-Regular';
+}
+
+body.dark #titulo_hilo {
+    background: var(--bg-dark);
+    border-color: var(--border-dark);
+    color: var(--text-color-dark);
+}
+
+#editor {
+    min-height: 250px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+}
+
+body.dark #editor {
+    border-color: var(--border-dark);
+}
+
+.ql-toolbar {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.ql-container {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+body.dark .ql-toolbar, body.dark .ql-container {
+    background: var(--bg-dark-secondary);
+    border-color: var(--border-dark) !important;
+}
+
+body.dark .ql-editor {
+    color: var(--text-color-dark);
+}
+
+body.dark .ql-snow .ql-stroke { stroke: #fff; }
+body.dark .ql-snow .ql-picker-label { color: #fff; }
+
+.form_actions {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+
+.submit_button {
+    padding: .8rem 2rem;
+    font-family: 'Akatab-Bold';
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--yellow);
+    color: #000;
+    cursor: pointer;
+    transition: all 180ms ease;
+}
+
+.submit_button:hover {
+    background-color: var(--black);
+    color: white;
+}
+
+
+.home_header .title_header {
+    font-family: 'Akatab-Bold';
+    font-size: 2rem;
+    margin: 0;
+    text-decoration: none;
+}
+.home_header .home_link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.home_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .5rem 1.5rem;
+    background-color: var(--yellow);
+    border-bottom: 1px solid #000;
+    gap: 1rem;
+}
+
+body.dark .home_header {
+    background: #212121;
+    border-color: var(--yellow);
+}
+
+.header_actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.color_mode_label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-color-light);
+    text-decoration: none;
+    font-size: 1.8rem;
+}
+
+body.dark .color_mode_label {
+    color: var(--text-color-dark);
+}
+
+.color_mode_label .e { display: inline; }
+.color_mode_label .i { display: none; }
+#color_mode:checked + .color_mode_label .e { display: none; }
+#color_mode:checked + .color_mode_label .i { display: inline; }
+
+@media (max-width: 768px) {
+    .creacion_hilo_content {
+        padding: 1rem;
+    }
+
+    .page_title {
+        font-size: 1.5rem;
+    }
+
+    .hilo_form {
+        padding: 1rem;
+    }
+
+    #editor {
+        min-height: 200px;
+    }
+
+    .submit_button {
+        width: 100%;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .home_header {
+        padding: 0.5rem 1rem;
+    }
+
+    .title_header {
+        font-size: 1.5rem;
+    }
+}
