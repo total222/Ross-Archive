@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Experiencia VR</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: black;
+      overflow: hidden;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+    #status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: sans-serif;
+      z-index: 10;
+    }
+    #panel {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 20;
+      align-items: flex-end;
+    }
+    button {
+      background: #1e90ff;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: #0078ff;
+      transform: scale(1.05);
+    }
+  </style>
+
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+  <script type="module">
+    import { CreateMLCEngine } from "https://unpkg.com/@mlc-ai/web-llm";
+
+    const canvas = document.createElement("canvas");
+    document.body.appendChild(canvas);
+    const status = document.createElement("div");
+    status.id = "status";
+    status.innerText = "Cargando...";
+    document.body.appendChild(status);
+
+    // --- PANEL DE BOTONES ---
+    const panel = document.createElement("div");
+    panel.id = "panel";
+    panel.innerHTML = `
+      <button id="vrBtn">🎮 Entrar en VR</button>
+      <button id="editBtn">🧩 Abrir Editor</button>
+    `;
+    document.body.appendChild(panel);
+
+    // --- DICCIONARIO GARÍFUNA ---
+    const diccionario = {
+      "hola": "Buiti",
+      "adiós": "Igueyuni",
+      "gracias": "Felü",
+      "amigo": "Abaidani",
+      "agua": "Ayu",
+      "comida": "Mügú",
+      "casa": "Gurugunu",
+      "familia": "Anawu",
+      "amor": "Ainina",
+      "día": "Dünügüni",
+      "noche": "Garadügüni",
+      "trabajo": "Abairu",
+      "niño": "Gabuga",
+      "mujer": "Abaidürü",
+      "hombre": "Uru",
+      "camino": "Ulalü",
+      "tierra": "Auba",
+      "fuego": "Lügüni",
+      "estrella": "Igani",
+      "luna": "Ainara",
+      "árbol": "Buya",
+      "pájaro": "Gugudugu",
+      "perro": "Arüba",
+      "gato": "Bügü",
+      "sol": "Gabaga",
+      "mar": "Wani",
+      "montaña": "Gibüla",
+      "viento": "Wäyu",
+      "cielo": "Gübu",
+      "hermano": "Buga",
+      "hermana": "Buya"
+    };
+
+    function traducirAGarifuna(texto) {
+      return texto.split(" ").map(palabra => {
+        const baja = palabra.toLowerCase().replace(/[.,!?]/g, "");
+        return diccionario[baja] || palabra;
+      }).join(" ");
+    }
+
+    // --- ESCENA ---
+    const engine = new BABYLON.Engine(canvas, true);
+    const scene = new BABYLON.Scene(engine);
+    const cam = new BABYLON.UniversalCamera("cam", new BABYLON.Vector3(0, 1.6, 0), scene);
+    cam.attachControl(canvas, true);
+    new BABYLON.HemisphericLight("luz", new BABYLON.Vector3(1, 1, 0), scene);
+
+    // --- VIDEO 360 ---
+    new BABYLON.VideoDome("dome", "video360.mp4", { resolution: 32, autoPlay: true, loop: true, muted: true }, scene);
+
+    // --- PERSONAJE ---
+    let cabeza = null, root = null;
+    BABYLON.SceneLoader.ImportMesh("", "./", "personaje.glb", scene, (m) => {
+      m.forEach(x => x.scaling = new BABYLON.Vector3(3, 3, 3));
+      root = new BABYLON.TransformNode("root", scene);
+      m.forEach(x => x.parent = root);
+      root.position = new BABYLON.Vector3(900, -350, 900);
+      root.rotation = new BABYLON.Vector3(
+        BABYLON.Tools.ToRadians(90),  // Rotación en X
+        BABYLON.Tools.ToRadians(220), // Rotación en Y
+        BABYLON.Tools.ToRadians(0)    // Rotación en Z
+      );
+
+      cabeza = m.find(x => /head|face|cabeza/i.test(x.name)) || m[0];
+      status.innerText = "Cargando IA local...";
+    });
+
+    // --- IA LOCAL ---
+    let ai = null;
+    CreateMLCEngine("Llama-3.2-1B-Instruct-q4f16_1-MLC", {
+      initProgressCallback: (p) => status.innerText = `Cargando IA ${Math.round(p.progress * 100)}%`
+    }).then(r => {
+      ai = r;
+      status.innerText = "🎧 Di 'ross' para comenzar";
+    });
+
+    // --- HABLAR ---
+    function hablar(t) {
+      const v = new SpeechSynthesisUtterance(t);
+      v.lang = "es-ES"; v.pitch = 1; v.rate = 1;
+      speechSynthesis.speak(v);
+      // Mientras habla, bloqueamos el micrófono
+      micActivo = false;
+      rec.stop();
+      v.onend = () => {
+        micActivo = true;
+        rec.start();
+      };
+    }
+
+    // --- ANIMACIÓN SIMPLE ---
+    function boca(on) {
+      if (!cabeza) return;
+      if (on) { scene.onBeforeRenderObservable.add(animar); }
+      else { scene.onBeforeRenderObservable.remove(animar); cabeza.rotation.x = 0; }
+    }
+    function animar() { cabeza.rotation.x = Math.sin(performance.now() * 0.02) * 0.05; }
+
+    // --- RECONOCIMIENTO DE VOZ ---
+    const Recog = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recog) { status.innerText = "⚠️ No soporta voz"; throw "no SR"; }
+    const rec = new Recog();
+    rec.lang = "es-ES"; rec.continuous = true; rec.interimResults = false;
+
+    let modo = "espera";
+    let micActivo = true;
+
+    rec.onresult = async (e) => {
+      if (!micActivo) return; // ignorar mientras habla
+      const texto = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
+      console.log("Escuchado:", texto);
+
+      if (modo === "espera") {
+        if (texto.includes("ross")) {
+          modo = "chat";
+          hablar("Buiti, ¿cómo estás?");
+          status.innerText = "🎙️ Puedes hablar conmigo...";
+        }
+      } else if (modo === "chat") {
+        if (ai) {
+          if (texto.includes("adiós") || texto.includes("chao")) {
+            hablar("Igueyuni. Hasta pronto.");
+            modo = "espera";
+            status.innerText = "🎧 Di 'ross' para volver a hablar";
+            return;
+          }
+
+          status.innerText = "🤖 Pensando...";
+          const resp = await ai.chat.completions.create({
+            messages: [{ role: "user", content: `Responde corto y natural: ${texto}` }],
+            stream: false
+          });
+
+          const out = resp.choices?.[0]?.message?.content || "No entendí.";
+          const respuestaGarifuna = traducirAGarifuna(out);
+
+          boca(true);
+          hablar(respuestaGarifuna);
+          setTimeout(() => boca(false), 5000);
+          status.innerText = "🎧 Di algo o 'adiós' para salir";
+        }
+      }
+    };
+
+    rec.onerror = (e) => {
+      console.warn("Error voz:", e);
+      status.innerText = "⚠️ Error micrófono, reiniciando...";
+      setTimeout(() => {
+        if(micActivo) rec.start();
+      }, 1000);
+    };
+
+    rec.onend = () => {
+      if (micActivo) setTimeout(() => rec.start(), 500);
+    };
+
+    // Iniciar solo en modo espera para activar con "ross"
+    rec.start();
+
+    // --- VR MODE ---
+    const xrHelperPromise = scene.createDefaultXRExperienceAsync({
+      uiOptions: { sessionMode: "immersive-vr" },
+      optionalFeatures: true
+    });
+    document.getElementById("vrBtn").onclick = async () => {
+      const xrHelper = await xrHelperPromise;
+      xrHelper.baseExperience.enterXRAsync("immersive-vr", "local-floor");
+    };
+
+    // --- BOTÓN EDITOR ---
+    document.getElementById("editBtn").onclick = () => {
+      BABYLON.DebugLayer.InspectorURL = "https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js";
+      if (scene.debugLayer.isVisible()) scene.debugLayer.hide();
+      else scene.debugLayer.show({ embedMode: true });
+    };
+
+    // Render loop
+    engine.runRenderLoop(() => scene.render());
+    window.addEventListener("resize", () => engine.resize());
+  </script>
+</head>
+<body></body>
+</html>
