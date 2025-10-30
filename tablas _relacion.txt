@@ -1,0 +1,113 @@
+---
+
+### 🧾 **Tabla:** `usuarios`
+
+**Campos:**
+
+* ID_user – integer (PK, auto-incremental)
+* usuario – varchar(255) (UNIQUE)
+* correo – varchar(255)
+* clave – varchar(255)
+* biografia – varchar(500)
+* telefono – varchar(255)
+* estado – boolean (default: true)
+* perfil – text
+
+**Relaciones:**
+
+* Referenciada por:
+
+  * `comentarios(autor_comentario)`
+  * `comentarios_hilo(autor_comentario_hilo)`
+  * `hilos(autor_hilo)`
+  * `items(usuario)`
+  * `post_blog(autor)`
+  * `post_wiki(autor_wiki_post)`
+  * `post_wiki(autor_modificacion)`
+
+---
+
+
+
+### 🧾 **Tabla:** `comentarios_hilo`
+
+**Campos:**
+
+* ID_comentario_hilo – integer (PK, auto-incremental)
+* autor_comentario_hilo – varchar(255) (FK → usuarios.usuario)
+* fecha_comentario_hilo – date
+* contenido_comentario_hilo – text
+* ID_hilo_comentario – integer (FK → hilos.ID_hilo)
+* respuesta_hacia – varchar(255)
+* like_comentario - bigint
+
+**Relaciones:**
+
+* 🔗 `autor_comentario_hilo` → `usuarios(usuario)`
+* 🔗 `ID_hilo_comentario` → `hilos(ID_hilo)`
+
+---
+
+### 🧾 **Tabla:** `hilos`
+
+**Campos:**
+
+* ID_hilo – integer (PK, auto-incremental)
+* titulo_hilo – varchar(255)
+* contenido_hilo – json (default: ‘sin descripcion’)
+* autor_hilo – varchar(255) (FK → usuarios.usuario)
+* fecha_hilo – date
+* estado_hilo - boolean (default: 'false')
+* likes - bigint
+
+**Relaciones:**
+
+* 🔗 `autor_hilo` → `usuarios(usuario)`
+* Referenciada por:
+
+  * `comentarios_hilo(ID_hilo_comentario)`
+
+---
+
+### 🧾 **Tabla:** `items`
+
+**Campos:**
+
+* ID_item – integer (PK, auto-incremental)
+* autor – varchar(255) (default: ‘N/A’)
+* usuario – varchar(255) (FK → usuarios.usuario)
+* titulo – varchar(255)
+* descripcion – text (default: ‘N/A’)
+* categoria – varchar(255)
+* fecha – date
+* idioma – varchar(255)
+* formato – varchar(255)
+* licencia – varchar(255)
+* evidencia_permiso – text (default: ‘N/A’)
+* ruta_archivo – text
+* visibilidad – boolean (default: false)
+* declaracion_legal – varchar(255)
+* preview – text (default: ‘N/A’)
+
+**Relaciones:**
+
+* 🔗 `usuario` → `usuarios(usuario)`
+
+---
+
+
+### **Tabla:** ´mensajes_admin´
+
+**Campos:**
+*"ID_peticion" : serial 
+*usuario : character varyng (255)
+mensaje : text
+
+
+### **Tabla:** ´hilo_likes´
+
+         ID_hilo INTEGER NOT NULL,
+            usuario VARCHAR(255) NOT NULL,
+            PRIMARY KEY (ID_hilo, usuario),
+            FOREIGN KEY (ID_hilo) REFERENCES hilos("ID_hilo") ON DELETE CASCADE,
+            FOREIGN KEY (usuario) REFERENCES usuarios(usuario) ON DELETE CASCADE

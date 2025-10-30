@@ -1,0 +1,127 @@
+
+# Análisis Técnico del Proyecto: Ross-Archive
+
+## 1. Resumen General
+
+Ross-Archive es una aplicación web multifuncional desarrollada en PHP, diseñada para la preservación y difusión de la cultura garífuna. La plataforma está estructurada en varios módulos principales: un repositorio de archivos (Ross-Hub), un foro de discusión (Ross-Forum), experiencias de realidad virtual (Ross-VR), y un traductor garífuna-español.
+
+El proyecto sigue una arquitectura tradicional de PHP, donde los archivos del `backend` contienen la lógica de negocio y el acceso a datos, mientras que la carpeta `html` contiene la presentación (vistas) y los scripts del lado del cliente (JavaScript, CSS). La interacción entre el frontend y el backend se realiza principalmente a través de llamadas AJAX a scripts PHP que actúan como endpoints de una API RESTful.
+
+**Tecnologías Clave:**
+- **Backend:** PHP 7/8, PostgreSQL (para la base de datos).
+- **Frontend:** HTML5, CSS3, JavaScript (Vanilla JS con uso intensivo de AJAX/Fetch API).
+- **Dependencias (PHP - Composer):**
+  - `google/apiclient`: Para la autenticación con Google (OAuth 2.0).
+  - `google/cloud-storage`: Para la gestión de almacenamiento de archivos en Google Cloud Storage (GCS).
+  - `phpmailer/phpmailer`: Para el envío de correos electrónicos (ej. restablecimiento de contraseña).
+- **Servidor:** Nginx con PHP-FPM.
+- **Alojamiento:** Google Cloud Platform (VM para el servidor y GCS para los buckets).
+
+---
+
+## 2. Análisis del Backend (`/backend`)
+
+El backend está organizado en subcarpetas que reflejan los distintos módulos de la aplicación.
+
+### 2.1. Conexión a la Base de Datos (`global_scripts.php`)
+
+- **`db_connect()`**: Utiliza PDO para conectarse a una base de datos PostgreSQL llamada `rossdb`. Las credenciales se obtienen de variables de entorno (`WORKSPACE_PASS`), lo cual es una buena práctica de seguridad.
+- **`log_error()`**: Proporciona una función de logging simple para registrar errores en `debug.log`.
+
+### 2.2. Gestión de Sesiones y Autenticación (`/sesiones_sistema`)
+
+- **Autenticación Propia:**
+  - `registro_script.php`: Maneja el registro de nuevos usuarios, hasheando las contraseñas con `password_hash()`.
+  - `sesion_script.php`: Verifica las credenciales del usuario y utiliza `password_verify()` para la autenticación.
+- **Autenticación con Google (OAuth 2.0):**
+  - `GCP_Oauth_script.php` y `get_Oauth_data.php`: Gestionan el flujo de autenticación con Google. Si un usuario de Google no existe en la base de datos, se crea una nueva cuenta automáticamente.
+- **Restablecimiento de Contraseña:**
+  - `verify_mail.php`: Utiliza `PHPMailer` para enviar un código de verificación al correo del usuario.
+  - `verify_code.php` y `change_password.php`: Completan el flujo de cambio de contraseña.
+- **Seguridad de Sesión:**
+  - Las cookies de sesión están configuradas con `SameSite=Lax`, `secure=true` y `httponly=true` para mitigar ataques CSRF y XSS.
+  - Se implementa protección CSRF mediante tokens en la mayoría de los formularios.
+
+### 2.3. Lógica del Repositorio (`/repo_backend`)
+
+- **`subir_archivo.php`**:
+  - Gestiona la subida de archivos al repositorio.
+  - Los archivos se suben a un bucket privado de Google Cloud Storage (`ross_archive-bucket`). La ruta del archivo se almacena en la base de datos en formato `gs://...`.
+  - Utiliza la librería `google/cloud-storage` para interactuar con GCS.
+- **`get_signed_url.php`**:
+  - Genera URLs firmadas (Signed URLs) para permitir el acceso temporal a los archivos privados en GCS. Esto es crucial para la seguridad, ya que los archivos no son públicamente accesibles.
+- **`obtain_info_repo.php` y `get_item_by_id.php`**:
+  - Endpoints para obtener la lista de archivos del repositorio o un archivo específico por su ID.
+  - Devuelven los metadatos del archivo junto con una URL firmada para su descarga/visualización.
+
+### 2.4. Lógica del Foro (`/foro_backend`)
+
+- **`subir_hilo.php`**: Crea nuevos hilos en el foro. El contenido del hilo (creado con un editor de texto enriquecido como Quill.js) se guarda como un string JSON en la base de datos.
+- **`foro_back.php` y `hilo_back.php`**: Endpoints para obtener la lista de hilos y el contenido de un hilo específico, incluyendo sus comentarios.
+- **`acciones_foro.php`**: Maneja todas las interacciones dentro de un hilo:
+  - Dar "like" a hilos y comentarios.
+  - Añadir, editar y eliminar comentarios.
+  - Eliminar hilos (y sus comentarios asociados).
+
+### 2.5. Panel de Administración (`/admin_backend`)
+
+- **`auth_admin.php`**: La autenticación del administrador se realiza comparando con credenciales almacenadas en variables de entorno, una capa de seguridad adicional.
+- **`admin_back.php`**: Es el corazón del panel de administración. Proporciona funcionalidades para:
+  - Obtener listas de usuarios, ítems del repositorio y hilos del foro.
+  - Filtrar y buscar en los datos.
+  - Actualizar el estado de los registros (activar/desactivar usuarios, aprobar/rechazar ítems y hilos).
+  - Eliminar ítems y hilos, incluyendo la eliminación del archivo correspondiente en Google Cloud Storage.
+- **`admin_estadisticas_back.php`**: Proporciona datos agregados (conteos) para generar gráficos en el dashboard del administrador.
+
+---
+
+## 3. Análisis del Frontend (`/html`)
+
+El frontend está construido con HTML, CSS y JavaScript puro, sin el uso de frameworks modernos como React o Vue. La interactividad se logra mediante scripts de JavaScript que realizan llamadas AJAX a los endpoints del backend.
+
+### 3.1. Estructura y Estilos
+
+- **Estructura Modular:** El código está organizado en carpetas que corresponden a las diferentes secciones de la plataforma (`admin_dashboard`, `formularios`, `plataforma`, `profile`).
+- **CSS:** Se utiliza CSS puro. Hay un archivo `global.css` para estilos comunes y archivos de estilo específicos para cada sección (ej. `home_style.css`, `foro_style.css`). Se utilizan fuentes personalizadas como Poppins, Cinzel y Akatab.
+
+### 3.2. Interactividad (JavaScript)
+
+- **AJAX:** El patrón principal de comunicación es el uso de la `Fetch API` en los archivos `*_ajax.js`.
+  - **`home_ajax.js`**: Carga dinámicamente el feed principal (hilos del foro o ítems del repositorio).
+  - **`repositorio_ajax.js`**: Carga los ítems del repositorio, gestiona los filtros y maneja la lógica del modal de subida de archivos.
+  - **`foro_ajax.js`**: Carga los hilos del foro, implementa el scroll infinito y maneja las interacciones de "like".
+  - **`admin_ajax.js`**: Controla toda la interactividad del panel de administración (carga de tablas, filtros, acciones de actualización y eliminación).
+- **Manipulación del DOM:** El contenido dinámico se renderiza creando elementos HTML en JavaScript y añadiéndolos al DOM.
+- **Manejo de Estado Simple:** El estado se gestiona a nivel de componente/página, sin un gestor de estado global. Por ejemplo, `foro_ajax.js` mantiene variables como `offset`, `limit` y `isLoading` para el scroll infinito.
+
+### 3.3. Endpoints de API del Lado del Cliente
+
+La carpeta `html` contiene numerosos archivos `api_*.php`. Estos no son más que "proxies" o puntos de entrada que incluyen los scripts correspondientes del `backend`. Por ejemplo, `html/plataforma/ross-hub/api_repositorio.php` simplemente hace un `include` de `backend/repo_backend/obtain_info_repo.php`. Esta separación, aunque funcional, podría simplificarse.
+
+### 3.4. Flujo de Usuario
+
+1.  **Página de Inicio (`index.html`):** Landing page estática con enlaces a las principales secciones y al registro/inicio de sesión.
+2.  **Registro/Inicio de Sesión (`/formularios`):** Formularios para crear una cuenta o iniciar sesión, con opción de usar Google.
+3.  **Home de la Plataforma (`/plataforma/home.php`):** Una vez autenticado, el usuario llega a un dashboard principal donde puede ver un feed de actividad reciente del foro o del repositorio.
+4.  **Módulos Principales:**
+    - **Repositorio (`/plataforma/ross-hub`):** El usuario puede buscar, filtrar y ver archivos. Las vistas previas (`preview.php`) cargan los detalles del ítem y usan la URL firmada para mostrar el contenido.
+    - **Foro (`/plataforma/ross-forum`):** El usuario puede ver hilos, participar en ellos, y crear nuevos hilos a través de `creacion_hilo.php`.
+5.  **Perfil de Usuario (`/profile`):** Los usuarios pueden ver y editar su información de perfil, incluyendo su foto, que se sube a GCS.
+
+---
+
+## 4. Puntos de Mejora y Observaciones
+
+- **Seguridad:**
+  - El uso de `htmlspecialchars` es consistente, lo que ayuda a prevenir ataques XSS.
+  - La implementación de tokens CSRF es una buena práctica.
+  - Las credenciales de la base de datos y de las APIs de Google se gestionan a través de variables de entorno, lo cual es seguro.
+- **Estructura del Proyecto:**
+  - La separación entre `backend` y `html/api_*.php` es redundante. Se podría simplificar teniendo una única carpeta de API en el backend y haciendo que el frontend llame directamente a esos endpoints.
+  - El código JavaScript podría beneficiarse de una estructura más moderna, como el uso de módulos ES6, para mejorar la organización y mantenibilidad.
+- **Rendimiento:**
+  - El uso de AJAX para cargar contenido dinámicamente es bueno para el rendimiento inicial de la página.
+  - La implementación de scroll infinito en el foro es una buena técnica de UX para manejar grandes cantidades de datos.
+- **Experiencia de Desarrollo:**
+  - La falta de un framework de frontend o backend puede hacer que el desarrollo de nuevas funcionalidades sea más lento y propenso a errores.
+  - No hay un sistema de migraciones de base de datos visible, lo que podría complicar la gestión de cambios en el esquema en un entorno de equipo.

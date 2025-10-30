@@ -1,0 +1,16 @@
+-Hay dos bucket, uno publico y uno privado.
+
+Publico: https://console.cloud.google.com/storage/browser/ross-archive_public-bucket;tab=objects?forceOnBucketsSortingFiltering=true&authuser=0&project=fifth-mechanism-469204-n3
+Privado: https://console.cloud.google.com/storage/browser/ross_archive-bucket;tab=objects?forceOnBucketsSortingFiltering=true&authuser=0&project=fifth-mechanism-469204-n3
+
+carpetas de ross-archive_public-bucket: (Tiene permisos AllUsers)
+fotos_de_perfil
+
+carpetas de ross_archive-bucket:(Usa una cuenta de servicio)
+documents
+images/
+music/
+videos/
+
+Variable de entorno para el json de credenciales:
+GOOGLE_APLICATION_CREDENTIAL
