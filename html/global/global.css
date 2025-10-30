@@ -1,0 +1,44 @@
+/* Coolors Exported Palette - https://coolors.co/ffffff-000000-fed90b */
+
+:root {
+    /*COLOR PALLETE*/
+    --white: #FFFFFF;
+    --black: #000000;
+    --yellow: #FED90B;
+    --transparent: transparent;
+
+    /*PATTERNS*/
+    --triangle-pattern: url("/recursos/patterns/triangle.svg");
+    --eyes-pattern: url("recursos/patterns/eyes.svg");
+    --olas-pattern: url("recursos/patterns/olas.svg");
+    --tribal-pattern: url("recursos/patterns/tribal.svg");
+    --tribal2-pattern: url("recursos/patterns/tribal2.svg");
+    --tribal3-pattern: url("recursos/patterns/tribal3.svg");
+    --tribal4-pattern: url("recursos/patterns/tribal4.svg");
+    --tribal5-pattern: url("recursos/patterns/tribal5.svg");
+    --tribalF-pattern: url("recursos/patterns/tribalF.svg");
+    --zebra-pattern: url("recursos/patterns/zebra.svg");
+
+     /*PATTERNS MODIFIED DIRECTION */
+ --triangle-pattern2: url("../recursos/patterns/triangle.svg");
+    --eyes-pattern2: url("../recursos/patterns/eyes.svg");
+    --olas-pattern2: url("../recursos/patterns/olas.svg");
+    --tribal-pattern2: url("../recursos/patterns/tribal.svg");
+    --tribal2-pattern2: url("../recursos/patterns/tribal2.svg");
+    --tribal3-pattern2: url("../recursos/patterns/tribal3.svg");
+    --tribal4-pattern2: url("../recursos/patterns/tribal4.svg");
+    --tribal5-pattern2: url("../recursos/patterns/tribal5.svg");
+    --tribalF-pattern2: url("../recursos/patterns/tribalF.svg");
+    --zebra-pattern2: url("../recursos/patterns/zebra.svg");
+
+    --triangle-pattern3: url("../../recursos/patterns/triangle.svg");
+    --eyes-pattern3: url("../../recursos/patterns/eyes.svg");
+    --olas-pattern3: url("../../recursos/patterns/olas.svg");
+    --tribal-pattern3: url("../../recursos/patterns/tribal.svg");
+    --tribal2-pattern3: url("../recursos/patterns/tribal2.svg");
+    --tribal3-pattern3: url("../../recursos/patterns/tribal3.svg");
+    --tribal4-pattern3: url("../../recursos/patterns/tribal4.svg");
+    --tribal5-pattern3: url("../../recursos/patterns/tribal5.svg");
+    --tribalF-pattern3: url("../../recursos/patterns/tribalF.svg");
+    --zebra-pattern3: url("../../recursos/patterns/zebra.svg")
+}
