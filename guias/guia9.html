@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen - Flujo dinámico con JS y Backend</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: linear-gradient(90deg, #0078ff, #00c6ff);
+            padding: 1.5em;
+            text-align: center;
+            color: white;
+        }
+
+        section {
+            padding: 2em;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        h1, h2 {
+            color: #00b4ff;
+        }
+
+        code {
+            background-color: #1e1e1e;
+            color: #dcdcaa;
+            padding: 0.3em 0.5em;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 0.5em 0;
+        }
+
+        pre {
+            background-color: #1e1e1e;
+            padding: 1em;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #dcdcdc;
+        }
+
+        ul {
+            line-height: 1.8em;
+        }
+
+        .highlight {
+            color: #00ffa6;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1em;
+            background-color: #161b22;
+            font-size: 0.9em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Resumen del flujo dinámico con JS y Backend</h1>
+        <p>Implementación de AJAX y estructura de comunicación frontend-backend</p>
+    </header>
+
+    <section>
+        <h2>Configuración general</h2>
+        <ul>
+            <li>Se instaló y configuró <strong>Claude AI</strong> dentro de la máquina virtual (VM).</li>
+            <li>Se estableció conexión por <strong>SSH desde VS Code</strong> para usarla directamente.</li>
+            <li>Se completó la configuración del <strong>sistema de registro, sesiones y verificación funcional</strong>.</li>
+            <li>Se definió el siguiente objetivo: crear una página <strong>Home</strong> con enlaces a diferentes secciones:
+                <ul>
+                    <li>Ross-hub</li>
+                    <li>Ross-wiki</li>
+                    <li>Ross-blog</li>
+                    <li>Ross-forum</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Arquitectura del flujo</h2>
+        <p>El nuevo enfoque de la aplicación usa una separación clara entre frontend y backend:</p>
+        <ul>
+            <li>El <strong>HTML</strong> tiene todos los elementos ya definidos en el DOM.</li>
+            <li><strong>JavaScript</strong> obtiene información del backend usando <span class="highlight">AJAX</span> (sin recargar la página).</li>
+            <li>JS <strong>rellena</strong> los elementos HTML existentes con los datos obtenidos.</li>
+            <li><strong>CSS</strong> se encarga de la presentación y el diseño visual.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Ejemplo básico de flujo AJAX</h2>
+
+        <h3>HTML (ya estructurado)</h3>
+        <pre><code>&lt;div id="usuario"&gt;
+    &lt;h2 id="nombre"&gt;&lt;/h2&gt;
+    &lt;p id="correo"&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;script src="script.js"&gt;&lt;/script&gt;
+</code></pre>
+
+        <h3>JavaScript (AJAX con fetch)</h3>
+        <pre><code>// script.js
+fetch("backend/get_user.php")
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("nombre").textContent = data.nombre;
+        document.getElementById("correo").textContent = data.correo;
+    })
+    .catch(error => console.error("Error al obtener datos:", error));
+</code></pre>
+
+        <h3>PHP (backend/get_user.php)</h3>
+        <pre><code>&lt;?php
+header("Content-Type: application/json");
+session_start();
+
+$user = [
+    "nombre" =&gt; "Sol",
+    "correo" =&gt; "sol@example.com"
+];
+
+echo json_encode($user);
+?&gt;
+</code></pre>
+
+        <p>De esta forma, el HTML no necesita ser modificado ni regenerado, solo se actualiza su contenido dinámicamente.</p>
+    </section>
+
+    <section>
+        <h2>Conceptos clave de AJAX</h2>
+        <ul>
+            <li><strong>AJAX</strong> = Asynchronous JavaScript and XML (aunque hoy se usa más <code>JSON</code>).</li>
+            <li>Permite <strong>obtener o enviar información</strong> al servidor sin recargar la página.</li>
+            <li>Se puede implementar con:
+                <ul>
+                    <li><code>XMLHttpRequest()</code> (forma clásica)</li>
+                    <li><code>fetch()</code> (forma moderna y más legible)</li>
+                </ul>
+            </li>
+            <li>El flujo general es:
+                <ol>
+                    <li>El frontend (JS) hace una petición al backend (PHP, Node, etc.).</li>
+                    <li>El backend procesa la solicitud y devuelve una respuesta (normalmente JSON).</li>
+                    <li>JS interpreta esa respuesta y actualiza el contenido del HTML.</li>
+                </ol>
+            </li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Ventajas del enfoque</h2>
+        <ul>
+            <li>Separación total entre la lógica del servidor y la vista.</li>
+            <li>Mejor rendimiento y fluidez de la interfaz.</li>
+            <li>Permite mantener el HTML estructurado y reutilizable.</li>
+            <li>Posibilita futuras integraciones con frameworks front-end (React, Vue, etc.) sin reescribir todo.</li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>Desarrollado por Sol &middot; Arquitectura Ross &middot; 2025</p>
+    </footer>
+</body>
+</html>

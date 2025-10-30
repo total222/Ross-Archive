@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resumen: Nginx, PHP-FPM y problemas de extensiones</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#7dd3fc;--good:#86efac;--bad:#ff7b7b}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6eef6;background:linear-gradient(180deg,#071022 0%,#081326 100%);}
+    .wrap{max-width:980px;margin:28px auto;padding:28px;border-radius:12px;background:linear-gradient(180deg, rgba(11,17,32,0.85), rgba(6,11,20,0.9));box-shadow:0 10px 40px rgba(2,6,23,0.6);}
+    h1{margin:0 0 8px;font-size:22px;color:var(--accent)}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+    section{margin:18px 0;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);}
+    h2{font-size:16px;margin:0 0 8px;color:#cfeffd}
+    ul{margin:8px 0 0 18px;color:var(--muted)}
+    code, pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;background:rgba(255,255,255,0.02);padding:6px;border-radius:6px;color:#d8f3ff}
+    pre{overflow:auto;padding:12px}
+    .ok{color:var(--good)}.err{color:var(--bad)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .foot{font-size:13px;color:var(--muted);margin-top:12px}
+    .note{background:linear-gradient(90deg, rgba(125,211,252,0.06), transparent);padding:10px;border-radius:8px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Resumen breve: Nginx + PHP-FPM — lo que vimos</h1>
+    <p class="lead">Guía condensada de los problemas que surgieron y las soluciones aplicadas: ocultar extensiones, evitar descarga de archivos .php, `try_files`, snippets y caché del navegador.</p>
+
+    <section>
+      <h2>Problemas frecuentes encontrados</h2>
+      <ul>
+        <li>Los archivos <code>.php</code> se descargan en vez de ejecutarse → Nginx no estaba pasando la request correctamente a PHP-FPM.</li>
+        <li>Uso de <code>rewrite ... permanent</code> generó redirecciones y caché del navegador que complicaron pruebas.</li>
+        <li>Duplicación de <code>try_files</code> al incluir <code>snippets/fastcgi-php.conf</code> + otro <code>try_files</code>.</li>
+        <li>Errores de sintaxis con <code>if(-f</code> (faltaba espacio/sintaxis correcta).</li>
+        <li>Caché del navegador (Edge) mostrando comportamiento viejo; pero Incognito mostraba la configuración real.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Reglas recomendadas y por qué</h2>
+      <ul>
+        <li>Usar <code>try_files $uri $uri/ $uri.php $uri.html =404;</code> en <code>location /</code> para resolver archivos sin extender.</li>
+        <li>Mantener <code>location ~ \.php$</code> para pasar a PHP-FPM (no duplicar validaciones).</li>
+        <li>No usar reescrituras externas <code>permanent</code> salvo que quieras forzar 301 (evita caché persistente).</li>
+        <li>Evitar <code>if</code> salvo cuando sea estrictamente necesario; preferir <code>try_files</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Snippets y ubicación</h2>
+      <p class="note">Archivo clave:</p>
+      <pre>/etc/nginx/snippets/fastcgi-php.conf</pre>
+      <p class="note">Ejemplo típico dentro del snippet:</p>
+      <pre>fastcgi_split_path_info ^(.+\.php)(/.+)$;
+try_files $fastcgi_script_name =404;
+include fastcgi_params;
+fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+fastcgi_param PATH_INFO $fastcgi_path_info;</pre>
+      <p class="foot">Si editas este snippet, evita duplicar <code>try_files</code> en tus <code>location</code> que incluyan el snippet.</p>
+    </section>
+
+    <section>
+      <h2>Comandos útiles</h2>
+      <div class="grid">
+        <div>
+          <p><strong>Test config</strong></p>
+          <pre>sudo nginx -t</pre>
+        </div>
+        <div>
+          <p><strong>Reiniciar servicios</strong></p>
+          <pre>sudo systemctl restart php8.2-fpm
+sudo systemctl restart nginx</pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Debug rápido (checklist)</h2>
+      <ul>
+        <li>¿Existe <code>index.php</code> en <code>$document_root</code>? ✅</li>
+        <li>¿Incluye tu <code>location ~ \.php$</code> <code>include snippets/fastcgi-php.conf</code> y <code>fastcgi_pass</code>? ✅</li>
+        <li>¿No hay <code>try_files</code> duplicado en el snippet y en el location que lo incluye? ✅</li>
+        <li>¿Probaste en Incognito o con query string (<code>?nocache=1</code>) para evitar caché obstinada? ✅</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Configuración final recomendada (clave)</h2>
+      <pre>location / {
+  try_files $uri $uri/ $uri.php $uri.html =404;
+}
+
+location ~ \.php$ {
+  include snippets/fastcgi-php.conf;
+  fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+  fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+}</pre>
+    </section>
+
+    <section>
+      <h2>Cómo vencer la caché en Edge (rápido)</h2>
+      <ul>
+        <li>Ctrl+Shift+R para forzar recarga.</li>
+        <li>Borrar datos del sitio vía candado → "Borrar datos del sitio" (solo para el dominio).</li>
+        <li>Abrir InPrivate (Ctrl+Shift+N) o usar <code>?nocache=1</code> en la URL.</li>
+      </ul>
+    </section>
+
+    <div class="foot">Si quieres, puedo exportar este HTML como archivo descargable o generar una versión que además incluya redirecciones 301 seguras para forzar la URL "limpia" (con precaución sobre caché de navegadores).</div>
+  </div>
+</body>
+</html>

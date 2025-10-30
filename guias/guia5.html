@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Despliegue en Google Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .step-content {
+            display: none;
+            transition: all 0.3s ease-in-out;
+        }
+        .step.active .step-content {
+            display: block;
+        }
+        .step.active .step-arrow {
+            transform: rotate(90deg);
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border: none;
+        }
+        .copy-button:hover {
+            background-color: #2d3748;
+        }
+        .nav-link.active {
+            font-weight: 700;
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+        .nav-link {
+            border-left-color: #e5e7eb;
+        }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 600px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 350px; 
+            max-height: 400px; 
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Professional Blue -->
+    <!-- Application Structure Plan: La SPA está diseñada como una guía de una sola página con una barra de navegación lateral vertical fija. Se eligió esta estructura porque el informe de origen es un proceso técnico lineal, paso a paso. Una barra lateral fija proporciona al usuario un "mapa" constante de todo el proceso, permitiéndole seguir el progreso y saltar entre secciones. El contenido principal es desplazable y utiliza acordeones plegables para los sub-pasos para evitar la sobrecarga de información. Las interacciones clave son el desplazamiento suave, el resaltado de la sección activa a través de IntersectionObserver y los botones de copia de un clic para los bloques de código. -->
+    <!-- Visualization & Content Choices: Report Info: Comandos CLI -> Goal: Informar -> Presentation: Bloques <pre><code> estilizados -> Interaction: Botón 'Copiar al portapapeles' (Vanilla JS) -> Justification: Reduce el error del usuario para los comandos técnicos. | Report Info: Comparación de Métodos DNS -> Goal: Comparar -> Presentation: Tabla HTML (estilizada con Tailwind) -> Justification: Presenta directamente los pros y los contras en un formato claro y estructurado como en la fuente. | Report Info: Comparación de Conexión SQL -> Goal: Comparar -> Presentation: Tabla HTML (estilizada con Tailwind) -> Justification: Igual que el anterior. | Report Info: Procesos paso a paso -> Goal: Organizar -> Presentation: Listas ordenadas y secciones plegables -> Justification: Descompone los procedimientos complejos en pasos manejables. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Guía de Implementación en Google Cloud</h1>
+            <p class="mt-4 text-lg text-stone-600">Una guía interactiva basada en el informe de arquitectura para configurar su VM, Dominio y Base de Datos.</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
+            
+            <aside class="md:w-1/4 lg:w-1/5 md:sticky md:top-8 h-full">
+                <h3 class="font-semibold mb-4 text-stone-700">Fases del Proyecto</h3>
+                <nav>
+                    <ul class="space-y-2">
+                        <li><a href="#section-1" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">1. Infraestructura de VM</a></li>
+                        <li><a href="#section-2" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">2. Preparación de la VM</a></li>
+                        <li><a href="#section-3" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">3. Flujo de Desarrollo</a></li>
+                        <li><a href="#section-4" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">4. Servicios Externos</a></li>
+                        <li><a href="#section-5" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">5. Conclusión</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="flex-1 space-y-12">
+                <section id="section-1" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Sección 1: Configuración de la Infraestructura Fundamental en Google Compute Engine</h2>
+                    <p class="mb-6 text-stone-600">Esta sección establece la base de la infraestructura: una identidad de red estable y vías de acceso seguras. Es imperativo reservar una dirección IP externa estática para garantizar la estabilidad del punto de conexión público del sistema.</p>
+                    <div class="space-y-6">
+                        
+                        <div class="step" data-step="1.1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.1 - Asegurar una Dirección IP Externa Estática</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Por defecto, las VMs reciben IPs efímeras que pueden cambiar. Para un servidor web, esto debe evitarse. Esta necesidad obliga a reservar una dirección IP externa estática.</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>Navegar a <span class="font-semibold">Red de VPC > Direcciones IP</span>.</li>
+                                    <li>En la pestaña <span class="font-semibold">Direcciones IP externas</span>, localizar la IP efímera asociada a la VM.</li>
+                                    <li>Hacer clic en la opción para cambiar el tipo de <span class="font-semibold">Efímera</span> a <span class="font-semibold">Estática</span>.</li>
+                                    <li>Asignar un nombre a la nueva dirección IP estática y confirmar la reserva.</li>
+                                </ol>
+                                <p class="mt-4 text-sm text-yellow-700 bg-yellow-50 p-3 rounded-md border border-yellow-200">Nota: Las direcciones IP estáticas son recursos facturables, especialmente si no están asignadas a una instancia en ejecución.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="1.2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.2 - Configuración de Reglas de Firewall de VPC</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Las reglas de firewall controlan el tráfico. Debemos permitir explícitamente las conexiones HTTP y HTTPS.</p>
+                                <ol class="list-decimal list-inside space-y-2 mb-4">
+                                    <li>Navegar a <span class="font-semibold">Red de VPC > Firewall</span>.</li>
+                                    <li>Hacer clic en <span class="font-semibold">Crear regla de firewall</span>.</li>
+                                    <li>Crear una regla para <span class="font-semibold">HTTP (allow-http)</span>:
+                                        <ul class="list-disc list-inside ml-6 mt-2">
+                                            <li><span class="font-semibold">Dirección del tráfico:</span> Entrada</li>
+                                            <li><span class="font-semibold">Acción:</span> Permitir</li>
+                                            <li><span class="font-semibold">Destinos:</span> Etiquetas de destino especificadas (ej: <code class="bg-stone-200 px-1 rounded">web-server</code>)</li>
+                                            <li><span class="font-semibold">Filtro de origen:</span> Rangos de IPv4, <code class="bg-stone-200 px-1 rounded">0.0.0.0/0</code></li>
+                                            <li><span class="font-semibold">Protocolos y puertos:</span> TCP, puerto <code class="bg-stone-200 px-1 rounded">80</code></li>
+                                        </ul>
+                                    </li>
+                                    <li class="mt-2">Repetir el proceso para <span class="font-semibold">HTTPS (allow-https)</span>, usando el puerto <code class="bg-stone-200 px-1 rounded">443</code>.</li>
+                                </ol>
+                                <p class="mt-4">Finalmente, edita tu instancia de VM y añade la etiqueta de red <code class="bg-stone-200 px-1 rounded">web-server</code> para aplicar estas reglas.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section id="section-2" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Sección 2: Preparación de la Máquina Virtual para el Alojamiento Web</h2>
+                    <p class="mb-6 text-stone-600">Con la red configurada, el siguiente paso es instalar el software en la VM: el servidor web Nginx y la herramienta de control de versiones Git.</p>
+                    <div class="space-y-6">
+
+                        <div class="step" data-step="2.1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>2.1 - Instalación y Configuración de Nginx</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Conéctate a tu VM por SSH y ejecuta los siguientes comandos.</p>
+                                <p class="mb-2 font-medium">1. Actualización de Paquetes:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>sudo apt update && sudo apt upgrade -y</code></pre>
+                                </div>
+                                <p class="mt-4 mb-2 font-medium">2. Instalación de Nginx:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>sudo apt install nginx -y</code></pre>
+                                </div>
+                                <p class="mt-4 mb-2 font-medium">3. Gestión del Servicio:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>sudo systemctl status nginx
+sudo systemctl enable nginx</code></pre>
+                                </div>
+                                <p class="mt-4">Verifica la instalación navegando a <code class="bg-stone-200 px-1 rounded">http://&lt;IP_ESTATICA_DE_LA_VM&gt;</code>. Deberías ver la página de bienvenida de Nginx.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="2.2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>2.2 - Instalación de Git</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Git se utilizará para obtener el código de la aplicación.</p>
+                                <p class="mb-2 font-medium">1. Instalación:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>sudo apt install git -y</code></pre>
+                                </div>
+                                <p class="mt-4 mb-2 font-medium">2. Verificación:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>git --version</code></pre>
+                                </div>
+                                <p class="mt-4 mb-2 font-medium">3. Configuración Inicial (Buena práctica):</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>git config --global user.name "Your Name"
+git config --global user.email "you@example.com"</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section id="section-3" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Sección 3: Flujo de Trabajo Eficiente de Desarrollo y Despliegue</h2>
+                    <p class="mb-6 text-stone-600">Esta sección establece tres métodos para interactuar con el código de la VM, cada uno adaptado a diferentes tareas: desarrollo remoto con IDE, transferencias manuales y despliegue estructurado.</p>
+                    <div class="space-y-6">
+
+                        <div class="step" data-step="3.1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>3.1 - Conexión de VS Code a la VM (Remote - SSH)</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Esto permite usar tu VS Code local para editar archivos que residen directamente en la VM.</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>En VS Code, instalar la extensión <code class="bg-stone-200 px-1 rounded">Remote - SSH</code> de Microsoft.</li>
+                                    <li>En tu máquina <span class="font-semibold">local</span>, genera un par de claves SSH:
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>ssh-keygen -t rsa -b 4096</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>Copia el contenido de tu clave pública (e.g., <code class="bg-stone-200 px-1 rounded">~/.ssh/id_rsa.pub</code>).</li>
+                                    <li>En la Consola de GCP, edita tu VM, ve a la sección <span class="font-semibold">"Claves SSH"</span>, haz clic en <span class="font-semibold">"Añadir elemento"</span> y pega tu clave pública.</li>
+                                    <li>En tu máquina <span class="font-semibold">local</span>, edita tu archivo <code class="bg-stone-200 px-1 rounded">~/.ssh/config</code> y añade un alias:
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>Host gcp-vm-dev
+    HostName &lt;IP_ESTATICA_DE_LA_VM&gt;
+    User &lt;nombre_de_usuario_de_la_clave_ssh&gt;
+    IdentityFile ~/.ssh/id_rsa</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>En VS Code, abre la paleta de comandos (Ctrl+Shift+P), selecciona <span class="font-semibold">"Remote-SSH: Connect to Host..."</span> y elige <code class="bg-stone-200 px-1 rounded">gcp-vm-dev</code>.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="3.2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>3.2 - Transferencias Manuales con `gcloud compute scp`</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Ideal para transferencias rápidas y puntuales de archivos. Requiere tener `gcloud CLI` instalado localmente.</p>
+                                <p class="mb-2 font-medium">Subir un archivo a la VM (reemplaza &lt;ARCHIVO_LOCAL&gt; y &lt;VM_NAME&gt;):</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>gcloud compute scp &lt;ARCHIVO_LOCAL&gt; &lt;VM_NAME&gt;:~/</code></pre>
+                                </div>
+                                <p class="mt-4 mb-2 font-medium">Descargar un archivo desde la VM:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <pre><code>gcloud compute scp &lt;VM_NAME&gt;:~/&lt;ARCHIVO_REmoto&gt; &lt;DESTINO_LOCAL&gt;</code></pre>
+                                </div>
+                                <p class="mt-4">Añade la bandera <code class="bg-stone-200 px-1 rounded">--recurse</code> para transferir directorios completos.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="3.3">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>3.3 - Estrategia de Despliegue Basada en Git (Pull)</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Este es un modelo simple y seguro. El desarrollo se envía a GitHub, y la VM "tira" (pull) de los cambios.</p>
+                                <p class="mb-2 font-medium">Configuración Inicial en la VM:</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>Navegar al directorio raíz web: <code class="bg-stone-200 px-1 rounded">cd /var/www/html</code></li>
+                                    <li>Ajustar permisos (crucial):
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>sudo chown -R $USER:$USER /var/www/html</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>Clonar el repositorio (el <code class="bg-stone-200 px-1 rounded">.</code> al final es importante):
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>git clone https://github.com/tu-usuario/tu-repo.git .</code></pre>
+                                        </div>
+                                    </li>
+                                </ol>
+                                <p class="mt-4 mb-2 font-medium">Proceso de Despliegue (Ciclo de Actualización):</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>El desarrollador hace `git push` a GitHub desde su máquina local.</li>
+                                    <li>Conectarse a la VM por SSH.</li>
+                                    <li>Navegar al directorio: <code class="bg-stone-200 px-1 rounded">cd /var/www/html</code></li>
+                                    <li>Obtener los últimos cambios:
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>git pull origin main</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>Reiniciar Nginx si es necesario: <code class="bg-stone-200 px-1 rounded">sudo systemctl restart nginx</code></li>
+                                </ol>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section id="section-4" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Sección 4: Integración de Servicios Externos: Dominio y Base de Datos</h2>
+                    <p class="mb-6 text-stone-600">Esta sección final conecta el servidor con el mundo exterior, apuntando un dominio real y enlazando un backend de base de datos gestionado.</p>
+                    <div class="space-y-6">
+
+                        <div class="step" data-step="4.1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>4.1 - Conexión del Dominio de Squarespace</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">El objetivo es apuntar tu dominio de Squarespace a la IP estática de tu VM.</p>
+                                
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-stone-200 border border-stone-200 rounded-lg">
+                                        <thead class="bg-stone-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Característica</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Método 1: Registro A en Squarespace (Simple)</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Método 2: Delegar a Google Cloud DNS (Recomendado)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-stone-200">
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Proceso</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Modificar el registro A en Squarespace para que apunte a la IP estática de la VM.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Cambiar los servidores de nombres en Squarespace para que apunten a Google Cloud DNS. Crear el registro A en Cloud DNS.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Ventajas</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Configuración inicial más simple.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Centraliza la gestión en GCP; propagación de DNS más rápida; mejor integración.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Desventajas</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Propagación más lenta; gestión dividida.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Requiere un paso adicional de cambio de servidores de nombres.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Recomendación</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Adecuado para sitios estáticos simples.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Recomendado para la mayoría de las aplicaciones que pueden escalar.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step" data-step="4.2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>4.2 - Creación de Base de Datos PostgreSQL con Cloud SQL</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Usar un servicio gestionado como Cloud SQL libera al desarrollador de las tareas de administración de la base de datos.</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>En la Consola de GCP, navegar a <span class="font-semibold">Bases de datos > SQL</span>.</li>
+                                    <li>Hacer clic en <span class="font-semibold">Crear instancia</span> y elegir <span class="font-semibold">PostgreSQL</span>.</li>
+                                    <li>Proporcionar un ID de instancia y una contraseña segura para el usuario <code class="bg-stone-200 px-1 rounded">postgres</code>.</li>
+                                    <li>Elegir la misma región que la VM de Compute Engine para minimizar la latencia.</li>
+                                    <li>En <span class="font-semibold">"Conexiones"</span>, asegurarse de que la <span class="font-semibold">"IP pública"</span> esté marcada por ahora.</li>
+                                    <li>Una vez creada, ir a la pestaña <span class="font-semibold">"Bases de datos"</span> y crear una nueva base de datos (e.g., <code class="bg-stone-200 px-1 rounded">mi_app_db</code>).</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="4.3">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>4.3 - Conexión Segura entre la VM y Cloud SQL</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Existen dos métodos para conectar la VM a Cloud SQL, con grandes implicaciones de seguridad.</p>
+
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-stone-200 border border-stone-200 rounded-lg">
+                                        <thead class="bg-stone-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Característica</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Método 1: Lista Blanca de IP (Menos Seguro)</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Método 2: Proxy de Autenticación (Recomendado)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-stone-200">
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Seguridad</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">La base de datos está expuesta a la Internet pública, protegida por firewall.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">La base de datos puede configurarse sin IP pública. Conexión cifrada y autenticada mediante IAM.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Autenticación</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Nombre de usuario/contraseña estándar.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Utiliza credenciales seguras de corta duración a través de roles de IAM.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Gestión</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Requiere actualizar manualmente la lista blanca si la IP de la VM cambia. Es frágil.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">No se requiere gestión de IP. El acceso se concede a través de roles de IAM, lo que es escalable.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">Recomendación</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Aceptable para pruebas rápidas, pero no recomendado para producción.</td>
+                                                <td class="px-6 py-4 text-sm text-stone-600">Fuertemente recomendado para todos los entornos.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <p class="mt-6 mb-2 font-medium">Configuración del Método 2 (Proxy de Autenticación):</p>
+                                <ol class="list-decimal list-inside space-y-2">
+                                    <li>Habilitar la API de <span class="font-semibold">Cloud SQL Admin</span> en el proyecto.</li>
+                                    <li>Asegurarse de que la cuenta de servicio de la VM tenga el rol de IAM <span class="font-semibold">"Cliente de Cloud SQL"</span>.</li>
+                                    <li>Descargar el proxy en la VM:
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>wget https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.2/cloud-sql-proxy.linux.amd64 -O cloud-sql-proxy
+chmod +x cloud-sql-proxy</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>Obtener el <span class="font-semibold">Nombre de conexión de la instancia</span> desde la página de resumen de Cloud SQL.</li>
+                                    <li>Ejecutar el proxy en segundo plano (reemplaza &lt;INSTANCE_CONNECTION_NAME&gt;):
+                                        <div class="code-block my-2">
+                                            <button class="copy-button">Copiar</button>
+                                            <pre><code>./cloud-sql-proxy &lt;INSTANCE_CONNECTION_NAME&gt; &</code></pre>
+                                        </div>
+                                    </li>
+                                    <li>Con el proxy en ejecución, la aplicación en la VM se conecta a la base de datos usando <code class="bg-stone-200 px-1 rounded">127.0.0.1</code> y el puerto <code class="bg-stone-200 px-1 rounded">5432</code>.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <section id="section-5" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Sección 5: Conclusión y Recomendaciones Estratégicas</h2>
+                    <p class="mb-6 text-stone-600">Se ha construido con éxito un sistema totalmente integrado. Para madurar este despliegue, se recomiendan los siguientes pasos:</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li>
+                            <span class="font-semibold">Implementar SSL/TLS:</span> Asegurar el sitio con HTTPS. Se recomienda usar <span class="font-semibold">Let's Encrypt</span> y <span class="font-semibold">certbot</span> para obtener certificados SSL gratuitos y automatizados.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Automatizar los Despliegues (CI/CD):</span> Evolucionar el flujo de trabajo manual de `git pull` hacia una canalización de CI/CD utilizando herramientas como <span class="font-semibold">GitHub Actions</span> o <span class="font-semibold">Cloud Build</span>.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Monitorización y Registros:</span> Introducir la suite de operaciones de Google Cloud (Stackdriver) para monitorizar el rendimiento de la VM, configurar alertas y centralizar los registros.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Escalabilidad:</span> Considerar futuras opciones de escalado, como grupos de instancias gestionados y un balanceador de carga.
+                        </li>
+                    </ul>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const steps = document.querySelectorAll('.step-header');
+            const copyButtons = document.querySelectorAll('.copy-button');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.phase-section');
+
+            steps.forEach(header => {
+                header.addEventListener('click', () => {
+                    const parentStep = header.closest('.step');
+                    parentStep.classList.toggle('active');
+                });
+            });
+
+            copyButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const codeBlock = button.parentElement.querySelector('pre');
+                    const text = codeBlock.innerText;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        button.textContent = '¡Copiado!';
+                        setTimeout(() => {
+                            button.textContent = 'Copiar';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Error al copiar:', err);
+                    });
+                });
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`.nav-link[href="#${id}"]`);
+
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        if (navLink) {
+                            navLink.classList.add('active');
+                        }
+                    }
+                });
+            }, { rootMargin: "-30% 0px -70% 0px", threshold: 0.1 });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
+

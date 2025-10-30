@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interactiva: Despliegue Web en Google Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .step-content {
+            display: none;
+            transition: all 0.3s ease-in-out;
+        }
+        .step.active .step-content {
+            display: block;
+        }
+        .step.active .step-arrow {
+            transform: rotate(90deg);
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border: none;
+        }
+        .copy-button:hover {
+            background-color: #2d3748;
+        }
+        .nav-link.active {
+            font-weight: 700;
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+        .nav-link {
+            border-left-color: #e5e7eb;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a vertical, single-page guide with a fixed navigation sidebar. The structure is broken down into five logical phases, from server setup to domain connection. This step-by-step, sequential layout is chosen for its clarity and ease of use, guiding the user through a complex process in a manageable, linear fashion. Each step is collapsible to prevent information overload. Key interactions include one-click code copying and active section highlighting on scroll, which enhances usability and helps the user track their progress effectively. -->
+    <!-- Visualization & Content Choices: The guide uses structured HTML and CSS to present information. Goal: Guide the user. Presentation: Each step is a styled card with text and code snippets. Interaction: Collapsible sections and copy-to-clipboard buttons for code. Justification: This format breaks down complex information into digestible parts, and interactive elements reduce the chance of manual error. Goal: Organize information. Presentation: A fixed sidebar navigator. Interaction: Highlights the current section on scroll. Justification: Provides at-a-glance context of the overall process and allows easy navigation between distant steps. No complex charts are needed; the focus is on textual clarity and interactive help. Library/Method: Vanilla JS for all interactions. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Guía de Despliegue en Google Cloud</h1>
+            <p class="mt-4 text-lg text-stone-600">Configura tu entorno web completo: VM, Base de Datos, Dominio y un flujo de desarrollo eficiente.</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
+            
+            <aside class="md:w-1/4 lg:w-1/5 md:sticky md:top-8 h-full">
+                <h3 class="font-semibold mb-4 text-stone-700">Fases del Proyecto</h3>
+                <nav>
+                    <ul class="space-y-2">
+                        <li><a href="#phase-1" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">1. Entorno en la VM</a></li>
+                        <li><a href="#phase-2" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">2. Desarrollo Remoto</a></li>
+                        <li><a href="#phase-3" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">3. Despliegue de Código</a></li>
+                        <li><a href="#phase-4" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">4. Base de Datos (Postgres)</a></li>
+                        <li><a href="#phase-5" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">5. Conexión de Dominio</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="flex-1 space-y-12">
+                <section id="phase-1" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Fase 1: Preparación del Entorno en la VM</h2>
+                    <p class="mb-6 text-stone-600">Antes de desplegar tu web, necesitas un servidor web para que la muestre al mundo. Usaremos Nginx, una opción popular y de alto rendimiento. También configuraremos Git para gestionar tu código.</p>
+                    <div class="space-y-6">
+                        <div class="step" data-step="1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.1 - Instalar Servidor Web Nginx</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Conéctate a tu VM por SSH y ejecuta estos comandos para actualizar tu sistema e instalar Nginx.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo apt update && sudo apt upgrade -y<br>sudo apt install nginx -y</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.2 - Configurar Firewall de GCP</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Para que el mundo exterior pueda acceder a tu web, debes abrir los puertos HTTP (80) y HTTPS (443) en el firewall de GCP. Ve a <span class="font-semibold">VPC Network > Firewall</span> en la consola de Google Cloud y crea una nueva regla:</p>
+                                <ul class="list-disc list-inside space-y-2 bg-stone-50 p-4 rounded">
+                                    <li><strong>Nombre:</strong> `allow-http-https`</li>
+                                    <li><strong>Destinos:</strong> `Todas las instancias en la red`</li>
+                                    <li><strong>Rangos de IP de origen:</strong> `0.0.0.0/0` (esto permite acceso desde cualquier IP)</li>
+                                    <li><strong>Protocolos y puertos especificados:</strong> Marca `tcp` y escribe `80, 443`</li>
+                                </ul>
+                                <p class="mt-4">¡Guarda la regla! Ahora tu VM puede recibir tráfico web.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="3">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.3 - Crear el Directorio para tu Web</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Es una buena práctica tener los archivos de tu web en un directorio específico. Lo crearemos y le daremos los permisos adecuados. Reemplaza `tudominio.com` con tu dominio real.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo mkdir -p /var/www/tudominio.com/html<br>sudo chown -R $USER:$USER /var/www/tudominio.com/html<br>sudo chmod -R 755 /var/www</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="4">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>1.4 - Configurar Nginx para tu Sitio</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Crea un archivo de configuración para que Nginx sepa dónde están los archivos de tu web. Reemplaza `tudominio.com`.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo nano /etc/nginx/sites-available/tudominio.com</code>
+                                </div>
+                                <p class="my-4">Pega el siguiente contenido dentro del editor `nano`, guarda (Ctrl+O) y cierra (Ctrl+X). No olvides cambiar `tudominio.com`.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>server {<br>    listen 80;<br>    listen [::]:80;<br><br>    root /var/www/tudominio.com/html;<br>    index index.html index.htm;<br><br>    server_name tudominio.com www.tudominio.com;<br><br>    location / {<br>        try_files $uri $uri/ =404;<br>    }<br>}</code>
+                                </div>
+                                 <p class="my-4">Finalmente, activa la configuración y reinicia Nginx para aplicar los cambios.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo ln -s /etc/nginx/sites-available/tudominio.com /etc/nginx/sites-enabled/<br>sudo systemctl restart nginx</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase-2" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Fase 2: Desarrollo Remoto con VS Code</h2>
+                     <p class="mb-6 text-stone-600">Editar archivos directamente en la terminal es incómodo. Con la extensión "Remote - SSH" de Visual Studio Code, puedes abrir la carpeta de tu proyecto en la VM como si fuera local, haciendo el desarrollo mucho más cómodo y rápido.</p>
+                     <div class="space-y-6">
+                        <div class="step" data-step="5">
+                             <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>2.1 - Instalar la Extensión "Remote - SSH"</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                             <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">En VS Code, ve al panel de Extensiones (Ctrl+Shift+X), busca `Remote - SSH` de Microsoft e instálala.</p>
+                                <img src="https://placehold.co/600x200/e2e8f0/4a5568?text=Panel+de+Extensiones+de+VSCode" alt="Instalación de Extensión en VS Code" class="rounded-md border">
+                            </div>
+                        </div>
+                        <div class="step" data-step="6">
+                             <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>2.2 - Conectar a tu VM</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                             <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Presiona `F1` y escribe `Remote-SSH: Connect to Host...`. Selecciona `+ Add New SSH Host...`. Se te pedirá que introduzcas el comando SSH. Necesitarás la IP externa de tu VM (consíguela en la sección "Compute Engine" de GCP).</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>ssh tu_usuario@IP_EXTERNA_DE_TU_VM</code>
+                                </div>
+                                <p class="my-4">Guarda la configuración. Ahora, presiona `F1` de nuevo, selecciona `Remote-SSH: Connect to Host...` y elige el host que acabas de guardar. Se abrirá una nueva ventana de VS Code conectada a tu VM.</p>
+                            </div>
+                        </div>
+                        <div class="step" data-step="7">
+                             <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>2.3 - Abrir la Carpeta del Proyecto</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                             <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Una vez conectado, ve a `Archivo > Abrir Carpeta...` y navega hasta el directorio que creaste en la Fase 1: `/var/www/tudominio.com/html`. ¡Listo! Ahora puedes crear, editar y eliminar archivos en tu servidor directamente desde VS Code.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="phase-3" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Fase 3: Despliegue y Actualización de Código</h2>
+                    <p class="mb-6 text-stone-600">Aquí te mostramos dos maneras de gestionar tu código: la forma recomendada y automatizada con Git para actualizaciones constantes, y la forma manual para transferencias puntuales.</p>
+                    <div class="space-y-6">
+                        <div class="step" data-step="8">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>3.1 - Método Recomendado: Git para Despliegue Continuo</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Este método te permite actualizar tu web con un simple `git push`. Primero, crea un repositorio "bare" en tu VM.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>mkdir /var/repo && cd /var/repo<br>git init --bare mi-proyecto.git</code>
+                                </div>
+                                <p class="my-4">Ahora, creamos un "hook" que copiará automáticamente los archivos a tu directorio web cada vez que hagas `push`.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo nano /var/repo/mi-proyecto.git/hooks/post-receive</code>
+                                </div>
+                                <p class="my-4">Pega este contenido en el archivo. Recuerda cambiar la ruta de destino. Luego, dale permisos de ejecución.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>#!/bin/sh<br>git --work-tree=/var/www/tudominio.com/html --git-dir=/var/repo/mi-proyecto.git checkout -f</code>
+                                </div>
+                                <div class="code-block mt-4">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo chmod +x /var/repo/mi-proyecto.git/hooks/post-receive</code>
+                                </div>
+                                <p class="my-4">En tu máquina local, añade tu VM como un "remote" de Git y sube tu código.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code># En tu PC local, dentro de tu proyecto<br>git remote add production ssh://tu_usuario@IP_EXTERNA_DE_TU_VM/var/repo/mi-proyecto.git<br>git push production main</code>
+                                </div>
+                                <p class="mt-4 font-semibold">A partir de ahora, cada vez que hagas `git push production main`, tu web se actualizará automáticamente.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="9">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>3.2 - Método Manual: `gcloud compute scp`</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Para subir archivos o carpetas de forma puntual, el comando `scp` (secure copy) de gcloud es la mejor opción. Debes tener `gcloud CLI` instalado en tu máquina local. Reemplaza `NOMBRE-VM` con el nombre de tu instancia.</p>
+                                <p class="my-4 font-medium">Para subir un archivo (ej: `index.html`):</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>gcloud compute scp ./index.html NOMBRE-VM:/var/www/tudominio.com/html/</code>
+                                </div>
+                                <p class="my-4 font-medium">Para subir una carpeta completa (ej: una carpeta `assets`):</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>gcloud compute scp --recurse ./assets NOMBRE-VM:/var/www/tudominio.com/html/</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                 <section id="phase-4" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Fase 4: Base de Datos con Cloud SQL para PostgreSQL</h2>
+                    <p class="mb-6 text-stone-600">Usar una base de datos gestionada como Cloud SQL te libera del mantenimiento y te da escalabilidad y seguridad. Aquí crearemos una instancia PostgreSQL.</p>
+                    <div class="space-y-6">
+                        <div class="step" data-step="10">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>4.1 - Crear Instancia de Cloud SQL</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">En la consola de GCP, ve a <span class="font-semibold">Bases de datos > SQL</span> y haz clic en "Crear instancia".</p>
+                                <ul class="list-disc list-inside space-y-2 bg-stone-50 p-4 rounded">
+                                    <li>Elige <strong>PostgreSQL</strong>.</li>
+                                    <li>Dale un <strong>ID de instancia</strong> (ej: `mi-proyecto-db`).</li>
+                                    <li>Genera una <strong>contraseña segura</strong> para el usuario `postgres` y guárdala bien.</li>
+                                    <li>Elige la versión de PostgreSQL y la región (elige la misma que tu VM para baja latencia).</li>
+                                    <li>Para desarrollo, puedes empezar con la configuración más pequeña en "Personalizar configuración".</li>
+                                    <li>Haz clic en <strong>Crear instancia</strong>. Tardará unos minutos.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="step" data-step="11">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>4.2 - Conectar de Forma Segura desde la VM</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">La forma más segura de conectar tu VM a Cloud SQL es usando el <span class="font-semibold">Cloud SQL Auth Proxy</span>. Esto crea una conexión encriptada sin necesidad de IPs públicas.</p>
+                                <p class="my-4 font-medium">Primero, descarga el proxy en tu VM:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy<br>chmod +x cloud_sql_proxy</code>
+                                </div>
+                                <p class="my-4 font-medium">Necesitas el "Nombre de conexión de la instancia" de tu base de datos. Lo encuentras en la página de detalles de tu instancia de Cloud SQL. Luego, inicia el proxy en segundo plano:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>./cloud_sql_proxy -instances=NOMBRE_DE_CONEXION_DE_INSTANCIA=tcp:5432 &</code>
+                                </div>
+                                <p class="my-4">Ahora, tu aplicación web en la VM puede conectarse a PostgreSQL como si estuviera corriendo localmente en `localhost` en el puerto `5432`.</p>
+                                <p class="my-4 font-medium">Para gestionar la base de datos (crear tablas, etc.), instala el cliente de Postgres en tu VM y conéctate:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo apt install postgresql-client -y<br>psql -h 127.0.0.1 -U postgres</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="phase-5" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">Fase 5: Conexión de tu Dominio de SquareSpace</h2>
+                    <p class="mb-6 text-stone-600">El último paso es hacer que tu dominio de SquareSpace apunte a tu nueva VM en Google Cloud. Para esto, necesitas una IP estática.</p>
+                    <div class="space-y-6">
+                        <div class="step" data-step="12">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>5.1 - Reservar una IP Externa Estática</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Por defecto, la IP de tu VM puede cambiar si la detienes. Necesitamos una que no cambie. Ve a <span class="font-semibold">VPC Network > Direcciones IP</span> en GCP. Verás la IP de tu VM como "Efímera". Haz clic en "Reservar" para convertirla en "Estática". Anota esta dirección IP.</p>
+                            </div>
+                        </div>
+                        <div class="step" data-step="13">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>5.2 - Configurar Registros DNS en SquareSpace</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Inicia sesión en tu cuenta de SquareSpace y ve a la configuración de DNS de tu dominio.</p>
+                                <ul class="list-disc list-inside space-y-2 bg-stone-50 p-4 rounded">
+                                    <li>Busca la sección de "Registros Personalizados".</li>
+                                    <li>Es posible que tengas un registro de tipo `A` existente que apunta a SquareSpace. Edítalo o elimínalo y crea uno nuevo.</li>
+                                    <li><strong>Crea un Registro A:</strong>
+                                        <ul>
+                                            <li><strong>Host:</strong> `@` (esto se refiere a tu dominio raíz, `tudominio.com`)</li>
+                                            <li><strong>Tipo:</strong> `A`</li>
+                                            <li><strong>Datos/Valor:</strong> Pega la IP estática que reservaste.</li>
+                                        </ul>
+                                    </li>
+                                    <li class="mt-2"><strong>Crea un CNAME para `www`:</strong>
+                                         <ul>
+                                            <li><strong>Host:</strong> `www`</li>
+                                            <li><strong>Tipo:</strong> `CNAME`</li>
+                                            <li><strong>Datos/Valor:</strong> `@` o `tudominio.com` (esto hace que `www.tudominio.com` apunte al mismo sitio que el dominio raíz).</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                <p class="mt-4">Guarda los cambios. Los cambios de DNS pueden tardar desde unos minutos hasta 48 horas en propagarse por todo el mundo. ¡Ten paciencia!</p>
+                                <p class="mt-4 font-bold text-green-600">¡Felicidades! Una vez propagado el DNS, al escribir tu dominio en un navegador, verás el contenido de tu VM servido por Nginx.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const steps = document.querySelectorAll('.step-header');
+            const copyButtons = document.querySelectorAll('.copy-button');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.phase-section');
+
+            steps.forEach(header => {
+                header.addEventListener('click', () => {
+                    const parentStep = header.closest('.step');
+                    parentStep.classList.toggle('active');
+                });
+            });
+
+            copyButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const codeBlock = button.nextElementSibling;
+                    const text = codeBlock.innerText;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        button.textContent = '¡Copiado!';
+                        setTimeout(() => {
+                            button.textContent = 'Copiar';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Error al copiar:', err);
+                    });
+                });
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`.nav-link[href="#${id}"]`);
+
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        navLink.classList.add('active');
+                    }
+                });
+            }, { rootMargin: "-30% 0px -70% 0px", threshold: 0.1 });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>

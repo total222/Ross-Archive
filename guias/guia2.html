@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Final: Estructura de Archivos y Activación de HTTPS (SSL)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .step-content {
+            display: none;
+            transition: all 0.3s ease-in-out;
+        }
+        .step.active .step-content {
+            display: block;
+        }
+        .step.active .step-arrow {
+            transform: rotate(90deg);
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border: none;
+        }
+        .copy-button:hover {
+            background-color: #2d3748;
+        }
+        .nav-link.active {
+            font-weight: 700;
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+        .nav-link {
+            border-left-color: #e5e7eb;
+        }
+        .highlight {
+            background-color: #e2e8f0;
+            color: #1e293b;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.2rem;
+            font-family: monospace;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: This final guide uses the established and effective single-page format with a fixed navigation sidebar. It addresses two distinct user goals: understanding file structure and implementing HTTPS. The structure logically separates these topics into two main sections. For the more complex HTTPS task, a collapsible step-by-step format is reused to ensure clarity and reduce cognitive load. This design choice provides a consistent, user-friendly experience based on previous successful interactions. -->
+    <!-- Visualization & Content Choices: Goal: Explain file/URL mapping. Presentation: A clear text explanation with highlighted code snippets for URLs and file paths. Justification: This is a conceptual explanation, so direct comparison via text is the most effective method. Goal: Guide HTTPS setup. Presentation: A multi-step, collapsible tutorial with copyable code blocks. Interaction: Collapsible sections and one-click copy buttons. Justification: This complex, command-based task benefits greatly from being broken down into manageable steps with interactive aids to prevent typos and errors. Library/Method: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Pasos Finales: Archivos y Seguridad HTTPS</h1>
+            <p class="mt-4 text-lg text-stone-600">¡Felicidades por llegar hasta aquí! Ahora vamos a organizar tu proyecto y darle el candado verde de seguridad.</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
+            
+            <aside class="md:w-1/4 lg:w-1/5 md:sticky md:top-8 h-full">
+                <h3 class="font-semibold mb-4 text-stone-700">Temas Finales</h3>
+                <nav>
+                    <ul class="space-y-2">
+                        <li><a href="#phase-1" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">1. Estructura de Archivos</a></li>
+                        <li><a href="#phase-2" class="nav-link block border-l-4 pl-4 py-1 text-stone-600 hover:text-blue-500 hover:border-blue-500 transition-colors duration-200">2. Activar HTTPS con Certbot</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="flex-1 space-y-12">
+                <section id="phase-1" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">1. ¿Cómo Funciona la Estructura de Archivos?</h2>
+                    <p class="mb-4 text-stone-600">Tu intuición es absolutamente correcta. La carpeta <span class="highlight">/var/www/ross-archive.org/html</span> es la "raíz" de tu sitio web. Todo lo que pongas dentro se reflejará directamente en la URL.</p>
+                    <div class="bg-stone-100 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-2">La Regla de Oro: Mapeo Directo</h4>
+                        <p class="mb-4">El servidor Nginx mapea la ruta de la URL directamente a la ruta de los archivos dentro de tu carpeta <span class="highlight">html</span>.</p>
+                        
+                        <p class="mb-2"><strong>Ejemplo 1: Tu archivo principal</strong></p>
+                        <ul class="list-disc list-inside mb-4 pl-4">
+                            <li><strong>Archivo en la VM:</strong> <span class="highlight">/var/www/ross-archive.org/html/index.html</span></li>
+                            <li><strong>URL para accederlo:</strong> <span class="highlight">http://ross-archive.org/</span></li>
+                        </ul>
+
+                        <p class="mb-2"><strong>Ejemplo 2: Tu caso con una subcarpeta</strong></p>
+                         <ul class="list-disc list-inside mb-4 pl-4">
+                            <li><strong>Si creas el archivo:</strong> <span class="highlight">/var/www/ross-archive.org/html/repositorio/repositorio.html</span></li>
+                            <li><strong>La URL para accederlo será:</strong> <span class="highlight">http://ross-archive.org/repositorio/repositorio.html</span></li>
+                        </ul>
+
+                        <p class="mb-2"><strong>Ejemplo 3: Archivos de Estilos (CSS) o Imágenes</strong></p>
+                         <ul class="list-disc list-inside mb-4 pl-4">
+                            <li><strong>Si creas la carpeta y el archivo:</strong> <span class="highlight">/var/www/ross-archive.org/html/css/estilos.css</span></li>
+                            <li><strong>Lo enlazarías en tu HTML así:</strong> <span class="highlight">&lt;link rel="stylesheet" href="/css/estilos.css"&gt;</span></li>
+                        </ul>
+                    </div>
+                     <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800">
+                        <p class="font-bold">En resumen: Sí, puedes empezar a crear cualquier estructura de carpetas y archivos que necesites dentro de la carpeta <span class="highlight">html</span> desde VS Code. Funcionará exactamente como esperas. ¡Tienes total libertad para organizar tu proyecto!</p>
+                    </div>
+                </section>
+                
+                <section id="phase-2" class="phase-section bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold mb-4 text-blue-600">2. Activar HTTPS (El Candado Verde)</h2>
+                    <p class="mb-6 text-stone-600">Hacer que tu sitio sea HTTPS es crucial para la seguridad y la confianza de los usuarios. Usaremos <strong>Let's Encrypt</strong> y <strong>Certbot</strong>, una herramienta gratuita y automatizada que hace este proceso increíblemente fácil.</p>
+                    <div class="space-y-6">
+                        <div class="step" data-step="1">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>Paso 1: El Prerrequisito Indispensable</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Para que Let's Encrypt pueda verificar que eres el dueño del dominio, tu dominio (<span class="highlight">ross-archive.org</span> y <span class="highlight">www.ross-archive.org</span>) **DEBE** estar apuntando correctamente a la IP de tu VM. Ya hiciste esto en la guía anterior, así que deberías estar listo. Si no, espera a que el DNS se propague.</p>
+                            </div>
+                        </div>
+
+                        <div class="step" data-step="2">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>Paso 2: Instalar Certbot</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Certbot es la herramienta que solicita e instala el certificado. El paquete <span class="highlight">python3-certbot-nginx</span> es un plugin que le permite a Certbot configurar Nginx automáticamente por ti. Ejecuta esto en la terminal de tu VM:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo apt update<br>sudo apt install certbot python3-certbot-nginx -y</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step" data-step="3">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>Paso 3: El Paso Mágico - Ejecutar Certbot</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Este es el único comando que necesitas. Certbot leerá tu configuración de Nginx, encontrará tus dominios y te guiará.</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo certbot --nginx -d ross-archive.org -d www.ross-archive.org</code>
+                                </div>
+                                <p class="my-4">Certbot te hará algunas preguntas:</p>
+                                <ul class="list-disc list-inside space-y-2 pl-4">
+                                    <li><strong>Correo electrónico:</strong> Ingresa tu email para notificaciones de renovación.</li>
+                                    <li><strong>Términos de Servicio:</strong> Acepta los términos.</li>
+                                    <li><strong>Compartir correo:</strong> Puedes decir que sí (Y) o no (N).</li>
+                                </ul>
+                                <div class="mt-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                                    <p class="font-bold">¡Pregunta Importante!</p>
+                                    <p>Certbot te preguntará si quieres redirigir el tráfico HTTP a HTTPS. Elige la opción <span class="font-bold">2 (Redirect)</span>. Esto es lo que quieres: que todos los que visiten <span class="highlight">http://...</span> sean enviados automáticamente a <span class="highlight">https://...</span></p>
+                                </div>
+                                <p class="mt-4">Si todo sale bien, verás un mensaje de felicitaciones. ¡Certbot habrá modificado tu archivo de Nginx para usar HTTPS!</p>
+                            </div>
+                        </div>
+
+                         <div class="step" data-step="4">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>Paso 4: Verificar la Renovación Automática</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">Lo mejor de Certbot es que configura una renovación automática para que no tengas que preocuparte por la expiración del certificado. Puedes hacer una simulación para confirmar que funciona:</p>
+                                <div class="code-block">
+                                    <button class="copy-button">Copiar</button>
+                                    <code>sudo certbot renew --dry-run</code>
+                                </div>
+                                <p class="mt-4">Si el comando termina sin errores, significa que la renovación automática está configurada correctamente.</p>
+                            </div>
+                        </div>
+
+                         <div class="step active" data-step="5">
+                            <h3 class="step-header cursor-pointer flex justify-between items-center font-semibold text-lg text-stone-800 bg-stone-100 p-4 rounded-md">
+                                <span>¡Listo! Disfruta de tu Sitio Seguro</span>
+                                <span class="step-arrow transition-transform duration-300 transform">&#x25B6;</span>
+                            </h3>
+                            <div class="step-content mt-4 px-4 pb-2 border-l-2 border-blue-200 ml-2">
+                                <p class="mb-4">¡Eso es todo! Ahora, si visitas tu sitio web en <span class="highlight">https://ross-archive.org</span>, deberías ver el candado verde en la barra de direcciones de tu navegador. Tu sitio ahora es seguro y profesional.</p>
+                                <p class="font-bold text-green-600">¡Has completado exitosamente todo el despliegue de tu proyecto. ¡Felicidades por este enorme logro!</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const steps = document.querySelectorAll('.step-header');
+            const copyButtons = document.querySelectorAll('.copy-button');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.phase-section');
+
+            steps.forEach(header => {
+                header.addEventListener('click', () => {
+                    const parentStep = header.closest('.step');
+                    parentStep.classList.toggle('active');
+                });
+            });
+
+            copyButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const codeBlock = button.nextElementSibling;
+                    const text = codeBlock.innerText;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        button.textContent = '¡Copiado!';
+                        setTimeout(() => {
+                            button.textContent = 'Copiar';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Error al copiar:', err);
+                    });
+                });
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`.nav-link[href="#${id}"]`);
+
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        navLink.classList.add('active');
+                    }
+                });
+            }, { rootMargin: "-30% 0px -70% 0px", threshold: 0.1 });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>

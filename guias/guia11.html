@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Resumen: Nginx — URLs limpias, PHP, HTTPS</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#0b1220; --accent:#7dd3fc; --muted:#94a3b8;
+    --code-bg:#071226; --good:#86efac;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: #e6eef6;
+  }
+  body{margin:0;padding:28px;background:linear-gradient(180deg,#071127 0%, #071327 100%); line-height:1.45;}
+  header{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+  header h1{margin:0;font-size:20px;color:var(--accent)}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:18px;border-radius:12px;box-shadow: 0 6px 30px rgba(2,6,23,0.6); margin-bottom:14px}
+  h2{margin:0 0 10px 0;color:#cfefff;font-size:16px}
+  p{margin:6px 0;color:var(--muted)}
+  pre{background:var(--code-bg);padding:12px;border-radius:8px;overflow:auto;color:#dbeafe;font-size:13px}
+  code{font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px}
+  .two{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:900px){.two{grid-template-columns:1fr 380px}}
+  ul{margin:6px 0 12px 18px;color:var(--muted)}
+  .tip{background:#071a0f;border-left:4px solid var(--good);padding:10px;border-radius:6px;margin-top:10px;color:#bdeecb}
+  .warn{background:#20120f;border-left:4px solid #fca5a5;padding:10px;border-radius:6px;margin-top:10px;color:#ffdede}
+  footer{margin-top:10px;color:var(--muted);font-size:12px}
+  a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="card" style="padding:10px 14px;display:flex;align-items:center">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="margin-right:10px"><path d="M3 12h18M12 3v18" stroke="#7dd3fc" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>
+      <h1>Resumen rápido — Nginx: URLs limpias y PHP</h1>
+      <div style="color:var(--muted);font-size:13px">Guía práctica y comandos de diagnóstico</div>
+    </div>
+  </div>
+</header>
+
+<section class="card two">
+  <div>
+    <h2>Objetivos</h2>
+    <ul>
+      <li>Servir páginas sin mostrar `.php` ni `.html` en la URL.</li>
+      <li>Ejecutar PHP con PHP-FPM correctamente.</li>
+      <li>Forzar HTTPS (HTTP → HTTPS) y mantener buenas prácticas (seguridad, SEO).</li>
+      <li>Evitar 404 por reglas `location` conflictivas.</li>
+    </ul>
+
+    <h2>Bloque Nginx recomendado (completo)</h2>
+    <pre><code># HTTP → HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ross-archive.org www.ross-archive.org;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS (principal)
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ross-archive.org www.ross-archive.org;
+
+    root /var/www/ross-archive.org/html;
+    index index.php index.html index.htm;
+
+    ssl_certificate /etc/letsencrypt/live/ross-archive.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ross-archive.org/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Intentar archivo, carpeta, .php y .html (oculta extensiones)
+    location / {
+        try_files $uri $uri/ $uri.php?$args $uri.html?$args =404;
+    }
+
+    # Ejecutar PHP
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        include fastcgi_params;
+    }
+
+    # Rate limit en formularios (ejemplo)
+    location /formularios {
+        limit_req zone=limite burst=10 nodelay;
+        try_files $uri $uri/ $uri.php?$args =404;
+    }
+
+    # Niega acceso a archivos ocultos
+    location ~ /\. { deny all; }
+
+    # Estáticos
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        try_files $uri =404;
+        expires 30d;
+        access_log off;
+    }
+}
+</code></pre>
+
+    <h2>Redirección limpia para .html</h2>
+    <p>Si querés que las URLs con extensión redirijan (301) a la versión limpia:</p>
+    <pre><code>location / {
+    rewrite ^/(.*)\.html$ /$1 permanent;
+    try_files $uri $uri/ $uri.php?$args $uri.html?$args =404;
+}</code></pre>
+
+    <h2>Qué hace <code>try_files</code> y <code>$args</code></h2>
+    <ul>
+      <li><code>try_files $uri $uri/ $uri.php?$args $uri.html?$args =404;</code> → intenta: archivo exacto, carpeta, archivo.php (con query string), archivo.html; si nada existe → 404.</li>
+      <li><code>$args</code> contiene la query string (ej. <code>id=42&amp;q=hola</code>) y se pasa a PHP para que <code>$_GET</code> la reciba.</li>
+    </ul>
+  </div>
+
+  <div>
+    <h2>Errores frecuentes y soluciones</h2>
+    <ul>
+      <li><strong>404 al entrar a /formularios/registro</strong>: suele ser porque existe un <code>location /formularios</code> sin <code>try_files</code>. Solución: añadir <code>try_files</code> dentro de ese bloque.</li>
+      <li><strong>Algunos .php se ocultan y otros no</strong>: prioridad de <code>location</code>. Los bloques más específicos (prefijo o regex) ganan; asegurá que todos los bloques relevantes incluyan <code>try_files</code> o usá una regla general que abarque subrutas.</li>
+      <li><strong>Nginx no usa .htaccess</strong>: cualquier regla debe ir en la config de Nginx (sites-available / sites-enabled).</li>
+      <li><strong>Sintaxis de rewrite mal formada</strong>: Nginx usa un solo <code>$1</code> para backreference y cada directiva termina en <code>;</code>. Ej.: <code>rewrite ^/(.*)\.html$ /$1 permanent;</code></li>
+    </ul>
+
+    <h2>Comandos útiles</h2>
+    <pre><code># comprobar sintaxis
+sudo nginx -t
+
+# recargar configuración
+sudo systemctl reload nginx
+
+# ver últimos errores (útil para 404/permission)
+sudo tail -n 50 /var/log/nginx/error.log
+
+# listar carpeta a la que apunta root
+ls -l /var/www/ross-archive.org/html/formularios/
+
+# permisos
+sudo chown -R www-data:www-data /var/www/ross-archive.org/html
+sudo chmod -R 755 /var/www/ross-archive.org/html</code></pre>
+
+    <div class="tip"><strong>Tip:</strong> si <code>/archivo.php</code> funciona pero <code>/archivo</code> da 404, tu <code>try_files</code> no está siendo alcanzado para esa ruta (probablemente por un bloque <code>location</code> más específico).</div>
+
+    <div class="warn"><strong>Advertencia:</strong> ocultar archivos estáticos (.js) no es recomendable en la práctica, porque los navegadores esperan la extensión y el content-type. Si querés “ocultarlos” por estética, debés controlar las rutas y los &lt;script src&gt; manualmente (puede complicar caché y CDN).</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Resumen ejecutivo — checklist rápido</h2>
+  <ul>
+    <li>✔️ Asegurar <code>root</code> correcto y permisos legibles por <code>www-data</code>.</li>
+    <li>✔️ Tener <code>location /</code> con <code>try_files $uri $uri/ $uri.php?$args $uri.html?$args =404;</code>.</li>
+    <li>✔️ Mantener <code>location ~ \.php$</code> para pasar a PHP-FPM (con <code>SCRIPT_FILENAME</code> y <code>fastcgi_split_path_info</code> si usás PATH_INFO).</li>
+    <li>✔️ Añadir <code>try_files</code> dentro de cualquier bloque <code>location</code> específico (p. ej. <code>/formularios</code>).</li>
+    <li>✔️ Usar un bloque en puerto 80 que redirija a HTTPS para evitar versiones inseguras indexadas por Google.</li>
+  </ul>
+
+  <footer>
+    ¿Querés que te deje este archivo listo para descargar o que lo adapte a una ruta/versión de PHP concreta? <a href="#" onclick="alert('Dime la versión de PHP-FPM y la ruta exacta y te devuelvo el bloque listo.')">Decime tu versión de PHP-FPM</a>.
+  </footer>
+</section>
+</body>
+</html>

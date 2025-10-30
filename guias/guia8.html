@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de sesión con Google - Explicación</title>
+
+    <!-- Script oficial de Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f5f6fa;
+            color: #333;
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #4285F4;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px 35px;
+            max-width: 800px;
+            margin: 30px auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        pre {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            color: #d63384;
+        }
+
+        .example {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .note {
+            background: #e8f0fe;
+            border-left: 4px solid #4285F4;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>🟢 Iniciar sesión con Google (Google Sign-In)</h1>
+
+    <div class="card">
+        <h2>1️⃣ ¿Qué hace este script?</h2>
+        <p>
+            Este fragmento carga el SDK oficial de Google Identity Services, necesario para mostrar el botón de “Iniciar sesión con Google”.
+        </p>
+
+        <pre><code>&lt;script src="https://accounts.google.com/gsi/client" async defer&gt;&lt;/script&gt;</code></pre>
+
+        <div class="note">
+            ✅ Al tener <code>async</code> y <code>defer</code>, el script no bloquea la carga de la página, así que puede ir perfectamente en el &lt;head&gt;.
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2️⃣ Configuración básica del botón</h2>
+        <p>
+            Se usa un contenedor que Google reemplaza automáticamente por el botón de inicio de sesión. 
+            Aquí defines tu <code>client_id</code> (público) y la función de callback.
+        </p>
+
+        <pre><code>&lt;div id="g_id_onload"
+     data-client_id="TU_CLIENT_ID.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse"&gt;
+&lt;/div&gt;
+
+&lt;div class="g_id_signin"
+     data-type="standard"
+     data-theme="filled_blue"
+     data-text="signin_with"
+     data-size="large"&gt;
+&lt;/div&gt;</code></pre>
+
+        <div class="note">
+            ⚙️ Puedes personalizar el botón con atributos <code>data-type</code>, <code>data-theme</code>, <code>data-size</code>, etc.
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3️⃣ Ejemplo funcional</h2>
+        <p>Al hacer clic en el botón, se ejecuta la función <code>handleCredentialResponse</code> con un token JWT que debes enviar a tu backend para validarlo.</p>
+
+        <pre><code>&lt;script&gt;
+function handleCredentialResponse(response) {
+  console.log("Token recibido:", response.credential);
+  // Enviar el token al backend para validarlo
+  fetch("/login.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: response.credential })
+  });
+}
+&lt;/script&gt;</code></pre>
+
+        <div class="example">
+            <!-- Ejemplo visual real -->
+            <div id="g_id_onload"
+                 data-client_id="769621572942-8inhrvtudprib6s9n4ka76nvhh8cqk1p.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"></div>
+
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-theme="filled_blue"
+                 data-text="signin_with"
+                 data-size="large"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>4️⃣ Buenas prácticas de seguridad</h2>
+        <ul>
+            <li>🔒 <strong>Valida el token</strong> en tu servidor usando las librerías oficiales de Google (no solo en frontend).</li>
+            <li>🌐 <strong>Restringe tu Client ID</strong> a tu dominio desde Google Cloud Console.</li>
+            <li>🧩 Usa <strong>HTTPS</strong> siempre: los tokens viajan cifrados en JWT.</li>
+            <li>🚫 Nunca expongas tu <code>client_secret</code> (solo se usa en backend).</li>
+        </ul>
+    </div>
+
+    <footer>
+        © 2025 - Ejemplo educativo sobre Google Sign-In.  
+        Explicación adaptada a partir de las recomendaciones oficiales de Google Identity Services.
+    </footer>
+</body>
+</html>
