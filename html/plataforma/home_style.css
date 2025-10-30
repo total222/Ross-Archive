@@ -1,0 +1,620 @@
+/* Left sidebar background and sizing */
+.right_nav {
+    background: var(--yellow);
+    padding: .75rem; /* breathing room around items */
+    border-right: 1px solid #000; /* right border */
+    transition: width 220ms ease, opacity 220ms ease, transform 220ms ease;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+/* Collapsed sidebar */
+.right_nav.collapsed {
+    width: 40px; /* keep a small handle visible so user can expand again */
+    padding: .25rem; /* reduce padding */
+    opacity: 0.95;
+    overflow: hidden;
+    transform: translateX(0);
+}
+
+.right_nav .section_list .section_link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .5rem;
+    border-radius: 6px;
+    transition: background-color 180ms ease, color 180ms ease;
+}
+
+.right_nav .section_list {
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.right_nav.collapsed .section_list {
+    opacity: 0;
+    transform: translateX(-6px) scale(.98);
+    pointer-events: none;
+}
+
+:root {
+    --yellow: #FED90B;
+    --yellow-dark: #E6C00A; /* slightly darker */
+    /* feed options visuals (light mode defaults) */
+    --feed-options-bg: #ffffff; /* white background for select and options */
+    --feed-option-text: #000000; /* black text on options */
+    --feed-option-hover: #F8F4E9; /* off-white / bone color on hover */
+    --feed-options-radius: 12px;
+}
+
+.right_nav .section_list .section_link:hover {
+    background-color: var(--yellow-dark);
+}
+
+.right_nav .section_list .icon {
+    font-variation-settings: 'wght' 400;
+    font-size: 1.05rem;
+}
+
+
+.home_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--yellow);
+    border-bottom: 1px solid #000000;
+    gap: 1rem;
+    padding: 1em;
+    position: relative; /* allow absolute children (dropdown) to align inside header */
+}
+
+#color_mode {
+    display: none;
+}
+
+
+.color_mode_label {
+    display: inline-flex;
+    gap: .25rem;
+}
+
+/* By default show only .e (light icon) and hide .i (dark icon) */
+.color_mode_label .e { display: inline; }
+.color_mode_label .i { display: none; }
+
+/* When checkbox is checked, swap icons: hide .e, show .i */
+#color_mode:checked + .color_mode_label .e { display: none; }
+#color_mode:checked + .color_mode_label .i { display: inline; }
+
+/* Header layout: left H1, centered form, right profile group */
+.home_header .title_header {
+    margin: 0; /* ensure no extra spacing */
+    flex: 0 0 auto; /* keep natural size */
+    font-family: Akatab-Bold;
+}
+.home_header form.feed_header {
+    flex: 1 1 40%;
+    display: flex;
+    justify-content: center; /* center the select */
+    align-items: center;
+    gap: .5rem;
+    font-family: Akatab-Bold;
+    width: 50%;
+}
+.home_header .color_mode_label,
+.home_header .profile_header {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+#select_header {
+    font-family: Akatab-Bold;
+    width: 100%;
+    padding: .5rem .75rem;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    background-color: var(--feed-options-bg);
+    cursor: pointer;
+    font-size: 1rem;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(16,24,40,0.04);
+    appearance: none; /* remove default arrow */
+    -webkit-appearance: none;
+    position: relative;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+/* Add a custom arrow using a pseudo-element on the select's container if needed */
+.feed_header { 
+    position: relative; width: 100%; max-width: 480px; 
+}
+.feed_header::after{
+    content: "\25BC"; /* small down arrow */
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: rgba(0,0,0,0.6);
+}
+
+/* rotate arrow when select is open */
+.feed_header.open::after{
+    transform: translateY(-50%) rotate(180deg);
+    transition: transform 220ms ease;
+}
+
+.feed_header::after{ transition: transform 220ms ease, color 160ms ease; }
+
+#select_header:focus {
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16,24,40,0.08);
+    border-color: rgba(0,0,0,0.18);
+
+}
+
+.home_content {
+    display: flex;
+    align-items: flex-start; /* align to top */
+}
+
+
+/* Dark-mode variants for select */
+body.dark #select_header{
+    background: #171717;
+    color: #fff;
+    border-color: rgba(255,255,255,0.06);
+    box-shadow: none;
+}
+
+body.dark .feed_header::after{ color: rgba(255,255,255,0.7); }
+
+.home_header .color_mode_label {
+    margin-left: auto; /* push the label (and following profile link) to the right */
+}
+.home_header .profile_header {
+    text-decoration: none;
+    color: inherit;
+    position: relative; /* for the dropdown absolute positioning */
+}
+
+/* Profile options dropdown: hidden by default, show on hover of link or list */
+.profile_options {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    right: 1rem;
+    top: calc(100% + 6px);
+    background: var(--yellow);
+    border: 1px solid rgb(0, 0, 0);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    list-style: none; /* remove bullets */
+    padding: .5rem 0;
+    margin: 0;
+    min-width: 180px;
+    max-height: calc(100vh - 6rem); /* occupy available height without creating page scroll */
+    overflow: auto;
+    font-family: Akatab-Regular, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    transform-origin: top right;
+    transform: translateY(-6px) scale(.98);
+    transition: opacity 200ms ease, transform 200ms ease, visibility 200ms;
+    z-index: 1200; /* above header content */
+}
+
+/* DARK THEME: when #color_mode checked we add .dark to body */
+body.dark {
+    color: #fff; /* text white */
+    background: #212121;
+}
+body.dark #toggleSidebar {
+    color: #fff;
+}
+body.dark .home_header,
+body.dark .right_nav,
+body.dark .profile_options {
+    background: #212121; /* header and sidebars black */
+    border-color: var(--yellow);
+    color: #fff;
+}
+body.dark .home_header { border-bottom: 1px solid var(--yellow); }
+body.dark .right_nav { border-right: 1px solid var(--yellow); }
+body.dark .profile_options { border: 1px solid var(--yellow); }
+
+/* Hover adjustments in dark mode */
+body.dark .right_nav .section_list .section_link:hover,
+body.dark .profile_link:hover {
+    background-color: rgb(0, 0, 0); /* light black */
+    color: #fff;
+}
+body.dark .feed_option:hover {background-color: black;}
+/* Ensure icons remain visible */
+body.dark .material-symbols-outlined { color: #fff; }
+.profile_options .profile_option {
+    padding: .4rem 1rem;
+}
+.profile_options .profile_option a {
+    text-decoration: none; /* remove link underline */
+    color: inherit;
+    display: block;
+}
+
+/* Custom animated options list */
+.feed_options{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 75%;
+    margin-top: .5rem;
+    background: var(--feed-options-bg);
+    border-radius: var(--feed-options-radius);
+    box-shadow: 0 12px 30px rgba(16,24,40,0.08);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-6px) scale(.995);
+    pointer-events: none;
+    transition: opacity 220ms ease, transform 220ms ease;
+    z-index: 40;
+}
+.feed_options.visible{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+.feed_option{
+    padding: .6rem .9rem;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    cursor: pointer;
+    background: transparent;
+    color: var(--feed-option-text);
+    transform: translateY(6px);
+    opacity: 0;
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease, background-color 160ms;
+}
+.feed_option.enter{ transform: translateY(0); opacity: 1; }
+.feed_option:hover{ background: whitesmoke; transition: background-color 160ms ease; }
+
+/* Best-effort: style native option hover where supported */
+/* Native option hover: try to force white background (note: limited browser support) */
+option.option_header:hover {
+    background: #e8e7e7 !important;
+    color: #000 !important;
+}
+
+/* Ensure custom feed options also use white background on hover with smooth transition */
+
+.feed_option:hover{ background: #d8d7d7; transition: background-color 160ms ease; }
+.feed_option.selected{ font-weight: 700; }
+
+/* Focus styles for keyboard users */
+.feed_option:focus{
+    outline: none;
+}
+.feed_option:focus-visible{
+    box-shadow: 0 6px 18px rgba(16,24,40,0.12) inset;
+    background: rgba(16,24,40,0.06);
+}
+
+/* Dark mode for custom list */
+body.dark .feed_options{ background: #171717; box-shadow: none; border: 1px solid rgba(255,255,255,0.04); }
+/* map variables for dark mode */
+body.dark{
+    --feed-options-bg: #171717;
+    --feed-option-hover: rgba(255,255,255,0.03);
+    --feed-option-text: #ffffff;
+}
+body.dark .feed_option{ color: #fff; border-bottom-color: rgba(255,255,255,0.02); }
+
+/* Show dropdown when hovering the profile link or the dropdown itself */
+.home_header .profile_header:hover + .profile_options,
+.home_header .profile_options:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+.profile_image {
+    display: none;
+}
+.profile_link, .open_profile_preview {
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 180ms ease, color 180ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .6rem;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: Akatab-Regular;
+    font-size: 1rem; /* enforce same font size */
+    line-height: 1; /* consistent vertical rhythm */
+}
+
+.profile_link:hover, .open_profile_preview:hover {
+    background-color: var(--yellow-dark);
+    transform: none; /* avoid any hover transform that might change size */
+}
+
+/* Toggle button inside sidebar */
+#toggleSidebar{
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: .25rem .35rem;
+}
+#toggleSidebar:hover{ background-color: rgba(0,0,0,0.06); }
+
+
+/* NAVBAR / right_nav adjustments */
+
+.right_nav .section_list {
+    list-style: none; /* remove bullets */
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem; /* slight separation between items */
+    font-family: Akatab-Regular;
+        margin-left: 1em;
+    min-height: 80vh;
+}
+.right_nav .section_list .section_item {
+    font-size: 0.95rem;
+
+}
+
+.section_link {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Ensure section links are white in dark mode */
+body.dark .section_link { color: #fff; }
+
+/* Footer width reduced to match items */
+.right_nav footer {
+    margin-top: 1rem;
+    font-size: 0.6rem; /* slightly smaller text */
+    width: max-content; /* shrink to content width */
+        font-family: Akatab-Regular;
+}
+
+/* Profile preview modal */
+.profile_preview_modal{ position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.36); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 180ms ease; font-family: Akatab-Regular, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+.profile_preview_modal[aria-hidden="false"]{ opacity: 1; pointer-events: auto; }
+.profile_preview_modal .ppm_dialog{ background: var(--feed-options-bg, #fff); color: var(--feed-option-text, #000); width: min(86vw,480px); max-width: 480px; box-sizing: border-box; border-radius: 12px; padding: 1.25rem; box-shadow: 0 18px 40px rgba(0,0,0,0.2); position: relative; }
+.ppm_close{ position: absolute; right: 10px; top: 10px; border: none; background: transparent; font-size: 1.25rem; cursor: pointer; }
+.ppm_body{ display:flex; flex-direction: column; align-items: center; gap: .75rem; font-family: Akatab-Regular; }
+.ppm_avatar{ width: 140px; height: 140px; border-radius: 50%; overflow: hidden; display: grid; place-items:center; background: rgba(0,0,0,0.04); }
+.ppm_avatar img.ppm_img{ width:100%; height:100%; object-fit: cover; display:block; }
+.ppm_avatar_placeholder{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; color: rgba(0,0,0,0.6); }
+.ppm_avatar_placeholder .material-symbols-outlined{ font-size: 5rem; }
+.ppm_name{ margin: 0; font-family: Akatab-Bold; font-size: 1.25rem; }
+.ppm_bio{ margin: 0; font-style: italic; color: rgba(0,0,0,0.7); text-align: center; }
+.ppm_contact{ display:flex; gap: 1rem; background: rgba(0,0,0,0.04); padding: .5rem .75rem; border-radius: 8px; }
+.ppm_email, .ppm_phone{ font-size: 0.95rem; }
+.ppm_edit_link{ margin-top: .5rem; text-decoration: none; padding: .5rem .8rem; border-radius: 8px; background: var(--yellow); color: #000; font-family: Akatab-Bold, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; display: inline-block; transition: background-color 160ms ease, transform 120ms ease; }
+.ppm_edit_link:hover, .ppm_edit_link:focus{ background: var(--yellow-dark); transform: translateY(-1px); }
+
+body.dark .profile_preview_modal .ppm_dialog{ background: #171717; color: #fff; border: 1px solid rgba(255,255,255,0.04); }
+body.dark .ppm_avatar{ background: rgba(255,255,255,0.02); }
+body.dark .ppm_avatar_placeholder{ color: rgba(255,255,255,0.6); }
+body.dark .ppm_bio{ color: rgba(255,255,255,0.85); }
+body.dark .ppm_contact{ background: rgba(255,255,255,0.02); }
+body.dark .ppm_edit_link{ background: var(--yellow); color: #000; }
+
+/* Home Feed Section */
+.home_feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    width: calc(100% - 240px); /* Adjust for sidebar width */
+    transition: width 220ms ease;
+}
+
+.right_nav.collapsed + .home_feed {
+    width: calc(100% - 70px); /* Adjust for collapsed sidebar */
+}
+
+.feed_card {
+    background: var(--feed-options-bg, #fff);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--feed-option-text, #000);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.feed_card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+}
+
+.feed_card_img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.feed_card_img_placeholder {
+    width: 100%;
+    height: 180px;
+    display: grid;
+    place-items: center;
+    background: rgba(0,0,0,0.04);
+}
+
+.feed_card_img_placeholder .material-symbols-outlined {
+    font-size: 4rem;
+    color: rgba(0,0,0,0.3);
+}
+
+.feed_card_content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.feed_card_title {
+    font-family: 'Akatab-Bold', sans-serif;
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.feed_card_desc {
+    font-family: 'Akatab-Regular', sans-serif;
+    font-size: 0.9rem;
+    margin: 0 0 1rem 0;
+    flex-grow: 1;
+    opacity: 0.8;
+}
+
+.feed_card_meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-family: Akatab-Regular;
+}
+
+.feed_card_author_img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.feed_card_forum_author {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-weight: bold;
+}
+
+.feed_card_stats {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.feed_card_stats .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+/* Dark Mode Feed */
+
+body.dark .feed_card {
+    background: #171717;
+    border-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+body.dark .feed_card_img_placeholder {
+    background: rgba(255,255,255,0.04);
+}
+
+body.dark .feed_card_img_placeholder .material-symbols-outlined {
+    color: rgba(255,255,255,0.3);
+}
+
+/* Loader and Error */
+.loader {
+    border: 4px solid rgba(0,0,0,0.1);
+    border-left-color: var(--yellow);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 4rem auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+body.dark .loader {
+    border-color: rgba(255,255,255,0.1);
+    border-left-color: var(--yellow);
+}
+
+.error_msg {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'Akatab-Regular', sans-serif;
+}
+
+@media (max-width: 1200px) {
+    .home_feed {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .home_header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .home_header .title_header {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .home_header form.feed_header {
+        order: 3;
+        width: 100%;
+        max-width: none;
+    }
+
+    .home_header .color_mode_label {
+        margin-left: 0;
+    }
+
+    .home_feed {
+        width: 100%;
+    }
+
+    .right_nav {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%);
+    }
+
+    .right_nav.toggled {
+        transform: translateX(0);
+    }
+
+    #toggleSidebar {
+        position: fixed;
+        left: 1rem;
+        top: 1rem;
+        z-index: 1001;
+        background: var(--yellow);
+        border: 1px solid var(--black);
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .home_feed {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+}
+
